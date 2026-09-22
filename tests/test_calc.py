@@ -40,6 +40,15 @@ def test_faltando_comprar():
     assert out.iloc[0]["custo_reposicao"] == pytest.approx(61.5)
 
 
+def test_faltando_comprar_preserva_marca():
+    df = pd.DataFrame([
+        {"id": 1, "nome": "Arroz", "marca": "Camil", "unidade": "5kg", "qtd_por_cesta": 2, "estoque_atual": 7, "preco_atual": 20.50},
+        {"id": 2, "nome": "Feijão", "marca": "Kicaldo", "unidade": "1kg", "qtd_por_cesta": 3, "estoque_atual": 21, "preco_atual": 5.25},
+    ])
+    out = calc.faltando_comprar(df, 5)
+    assert out.iloc[0]["marca"] == "Camil"
+
+
 def test_custo_cesta_sem_colunas_retorna_zero():
     df = pd.DataFrame([{"id": 1, "nome": "Arroz"}])
     assert calc.custo_cesta(df) == 0.0

@@ -25,9 +25,19 @@ token = auth.get_token()
 def carregar_compras(user_id, _token):
     return db.listar_compras(_token)
 
+
+@st.cache_data(ttl=60)
+def carregar_nomes_voluntarios(user_id, _token):
+    """Mapa id -> nome para a busca (falha silenciosa: busca por produto segue)."""
+    try:
+        return {p["id"]: (p.get("nome") or "") for p in db.listar_profiles(_token)}
+    except Exception:
+        return {}
+
 with st.spinner("Carregando histórico..."):
     try:
         compras = carregar_compras(user["user_id"], token)
+        nomes_voluntarios = carregar_nomes_voluntarios(user["user_id"], token)
     except Exception:
         traceback.print_exc()
         st.error("Erro ao carregar dados.")
@@ -78,7 +88,7 @@ if busca:
     busca_lower = busca.lower()
     df_filtrado = df_filtrado[
         df_filtrado.apply(
-            lambda r: busca_lower in str(r.get("criado_por", "")).lower() or
+            lambda r: busca_lower in str(nomes_voluntarios.get(r.get("criado_por") or "", "")).lower() or
                       any(busca_lower in str(item.get("produto", "")).lower()
                           for item in (r.get("itens_lista") or [])),
             axis=1

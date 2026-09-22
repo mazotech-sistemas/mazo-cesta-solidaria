@@ -1,5 +1,4 @@
 import html
-import time
 import traceback
 
 import streamlit as st
@@ -38,7 +37,7 @@ def carregar_dashboard(user_id, _token):
     regioes = db.listar_regions(_token)
     regiao_ativa = db.get_config("tenda_region_id", _token) or config.TENDA_REGION_DEFAULT
     dias_stale = int(db.get_config("preco_stale_dias", _token) or config.PRECO_STALE_DIAS_DEFAULT)
-    compras_mes = db.contar_compras_desde(_token, time.strftime("%Y-%m-01"))
+    compras_mes = db.contar_compras_desde(_token, config.agora_sp().strftime("%Y-%m-01"))
     return produtos, compras, regioes, regiao_ativa, dias_stale, compras_mes
 
 with st.spinner("Carregando dashboard..."):
@@ -155,6 +154,6 @@ nome_regiao = next((r.get("nome") for r in regioes if r.get("region_id") == regi
 st.markdown("---")
 st.markdown(html_block(f"""
 <div class="text-center" style="color:var(--text-muted);font-size:0.8125rem;padding:16px;">
-    Última atualização: {time.strftime("%d/%m/%Y %H:%M")} - Região ativa: {html.escape(str(nome_regiao))}
+    Última atualização: {config.agora_sp().strftime("%d/%m/%Y %H:%M")} - Região ativa: {html.escape(str(nome_regiao))}
 </div>
 """), unsafe_allow_html=True)

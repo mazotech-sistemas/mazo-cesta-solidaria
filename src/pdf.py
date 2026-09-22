@@ -1,7 +1,16 @@
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
-LARGESTA_NOME = 38
+LARGESTA_NOME = 30
+LARGESTA_MARCA = 20
+
+
+def _texto_seguro(valor: object, largura: int, padrao: str = "-") -> str:
+    texto = str(valor or "").strip() or padrao
+    texto = texto.encode("latin-1", "replace").decode("latin-1")
+    if len(texto) > largura:
+        texto = texto[:largura - 3] + "..."
+    return texto
 
 
 def gerar_pdf_lista_compras(itens: list[dict], total: float, data_preco: str) -> bytes:
@@ -19,23 +28,24 @@ def gerar_pdf_lista_compras(itens: list[dict], total: float, data_preco: str) ->
     def cabecalho_tabela():
         pdf.ln(5)
         pdf.set_font("Helvetica", "B", 10)
-        pdf.cell(70, 8, "Produto", 1)
-        pdf.cell(30, 8, "Estoque", 1)
-        pdf.cell(30, 8, "Comprar", 1)
-        pdf.cell(40, 8, "Custo", 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(50, 8, "Produto", 1)
+        pdf.cell(40, 8, "Marca", 1)
+        pdf.cell(25, 8, "Estoque", 1)
+        pdf.cell(25, 8, "Comprar", 1)
+        pdf.cell(30, 8, "Custo", 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font("Helvetica", "", 10)
 
     cabecalho_tabela()
     for item in itens:
         if pdf.will_page_break(8):
             cabecalho_tabela()
-        nome = str(item["produto"]).encode("latin-1", "replace").decode("latin-1")
-        if len(nome) > LARGESTA_NOME:
-            nome = nome[:LARGESTA_NOME - 3] + "..."
-        pdf.cell(70, 8, nome, 1)
-        pdf.cell(30, 8, str(item["estoque"]), 1)
-        pdf.cell(30, 8, str(item["comprar"]), 1)
-        pdf.cell(40, 8, f'R$ {item["custo"]:.2f}', 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        nome = _texto_seguro(item.get("produto"), LARGESTA_NOME)
+        marca = _texto_seguro(item.get("marca"), LARGESTA_MARCA)
+        pdf.cell(50, 8, nome, 1)
+        pdf.cell(40, 8, marca, 1)
+        pdf.cell(25, 8, str(item["estoque"]), 1)
+        pdf.cell(25, 8, str(item["comprar"]), 1)
+        pdf.cell(30, 8, f'R$ {item["custo"]:.2f}', 1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.ln(5)
     pdf.set_font("Helvetica", "B", 12)

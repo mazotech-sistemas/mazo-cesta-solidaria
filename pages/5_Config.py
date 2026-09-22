@@ -184,21 +184,15 @@ with col1:
                     erros = 0
                     for i, prod in enumerate(com_token):
                         try:
-                            if prod.get("termo_busca"):
-                                vencedor = cliente_scraper.buscar_mais_barato(
-                                    prod["termo_busca"], unidade_alvo=prod.get("unidade") or ""
-                                )
-                                if not vencedor:
-                                    st.caption(f"{prod['nome']}: nenhum candidato com o mesmo peso; preço mantido")
-                                    continue
-                                preco = vencedor.preco
-                                slug_dia = vencedor.slug
-                                marca_dia = vencedor.marca or ""
-                            else:
-                                resultado = scraper_tenda.buscar_preco_produto(prod["token_tenda"], region_id)
-                                preco = resultado["preco"]
-                                slug_dia = prod["token_tenda"]
-                                marca_dia = ""
+                            # Com termo_busca, token_tenda passa a apontar
+                            # para o vencedor (marca mais barata) do dia.
+                            cotacao = scraper_tenda.cotar_produto(prod, cliente_scraper)
+                            if cotacao is None:
+                                st.caption(f"{prod['nome']}: nenhum candidato com o mesmo peso; preço mantido")
+                                continue
+                            preco = cotacao["preco"]
+                            slug_dia = cotacao["slug"]
+                            marca_dia = cotacao["marca"]
                             agora = datetime.now(UTC).isoformat()
                             db.inserir_precos_historico([
                                 {"produto_id": prod["id"], "preco": preco, "dia": agora[:10], "region_id": region_id}

@@ -1,11 +1,10 @@
 import json
-import time
 import traceback
 
 import pandas as pd
 import streamlit as st
 
-from src import auth, calc, config, db, pdf
+from src import auth, calc, config, db, estoque, pdf
 from src.ui import (
     carregar_dias_stale_cached,
     carregar_produtos_cached,
@@ -46,6 +45,12 @@ if df.empty:
     st.warning("Estoque vazio. Va em **Estoque** para cadastrar produtos.")
     if st.button("Ir para Estoque", type="primary", width='stretch'):
         st.switch_page("pages/1_Estoque.py")
+    st.stop()
+
+# Inativos nao entram no custo da cesta nem na lista de compras.
+df = estoque.somente_ativos(df)
+if df.empty:
+    st.info("Todos os produtos estao inativos. Reative em Estoque para simular.")
     st.stop()
 
 # ===== CALCULOS BASE =====
@@ -102,6 +107,11 @@ if faltando.empty:
 
 # Renomear colunas para compatibilidade com o UI
 faltando = faltando.rename(columns={"nome": "produto"})
+if "marca" not in faltando.columns:
+    faltando["marca"] = ""
+faltando["marca"] = faltando["marca"].fillna("")
+if "unidade" not in faltando.columns:
+    faltando["unidade"] = ""
 
 # Formatar para exibição
 faltando_display = faltando.copy()
@@ -112,8 +122,8 @@ total = sum(faltando["custo_reposicao"])
 st.metric("Total da compra", f"R$ {total:.2f}")
 
 st.data_editor(
-    faltando_display[["produto", "unidade", "estoque_atual", "qtd_por_cesta", "faltando", "preco_atual_fmt", "custo_reposicao_fmt"]].rename(columns={
-        "produto": "Produto", "unidade": "Unid.", "estoque_atual": "Estoque",
+    faltando_display[["produto", "marca", "unidade", "estoque_atual", "qtd_por_cesta", "faltando", "preco_atual_fmt", "custo_reposicao_fmt"]].rename(columns={
+        "produto": "Produto", "marca": "Marca", "unidade": "Unid.", "estoque_atual": "Estoque",
         "qtd_por_cesta": "Qtd/Cesta", "faltando": "Comprar", "preco_atual_fmt": "Preço Unit.", "custo_reposicao_fmt": "Custo"
     }),
     width='stretch', hide_index=True, disabled=True,
@@ -135,14 +145,14 @@ col1, col2, col3 = st.columns(3)
 
 # PDF (gerado sob demanda; bytes ficam em session_state)
 with col1:
-    if st.session_state.get("pdf_parametros") != (int(cestas_desejadas), float(orcamento), time.strftime("%d/%m/%Y")):
+    if st.session_state.get("pdf_parametros") != (int(cestas_desejadas), float(orcamento), config.agora_sp().strftime("%d/%m/%Y")):
         if st.button("Preparar PDF", width='stretch', type="secondary"):
-            itens_pdf = faltando[["produto", "estoque_atual", "faltando", "custo_reposicao"]].rename(columns={
-                "produto": "produto", "estoque_atual": "estoque", "faltando": "comprar", "custo_reposicao": "custo"
+            itens_pdf = faltando[["produto", "marca", "estoque_atual", "faltando", "custo_reposicao"]].rename(columns={
+                "produto": "produto", "marca": "marca", "estoque_atual": "estoque", "faltando": "comprar", "custo_reposicao": "custo"
             }).to_dict("records")
             try:
-                st.session_state["pdf_bytes"] = pdf.gerar_pdf_lista_compras(itens_pdf, total, time.strftime("%d/%m/%Y %H:%M"))
-                st.session_state["pdf_parametros"] = (int(cestas_desejadas), float(orcamento), time.strftime("%d/%m/%Y"))
+                st.session_state["pdf_bytes"] = pdf.gerar_pdf_lista_compras(itens_pdf, total, config.agora_sp().strftime("%d/%m/%Y %H:%M"))
+                st.session_state["pdf_parametros"] = (int(cestas_desejadas), float(orcamento), config.agora_sp().strftime("%d/%m/%Y"))
                 st.rerun()
             except Exception:
                 traceback.print_exc()
@@ -165,7 +175,7 @@ with col2:
         else:
             st.session_state["salvando_compra"] = True
             try:
-                itens_json = json.dumps(faltando[["produto", "qtd_por_cesta", "preco_atual", "custo_reposicao"]].to_dict("records"))
+                itens_json = json.dumps(faltando[["produto", "marca", "unidade", "qtd_por_cesta", "preco_atual", "custo_reposicao"]].to_dict("records"))
                 compra = {
                     "orcamento": orcamento if orcamento > 0 else None,
                     "num_cestas": int(cestas_desejadas),

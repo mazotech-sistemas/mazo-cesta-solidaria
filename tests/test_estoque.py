@@ -90,3 +90,91 @@ def test_filtrar_sem_coluna_token_retorna_inalterado():
     df = pd.DataFrame([{"id": 1, "nome": "Arroz", "marca": "C"}])
     out = estoque.filtrar(df, "", "desatualizado", dias=2)
     assert len(out) == len(df)
+
+
+def test_somente_ativos_filtra_inativos():
+    df = pd.DataFrame([
+        {"id": 1, "nome": "Arroz", "ativo": True},
+        {"id": 2, "nome": "Feijao", "ativo": False},
+        {"id": 3, "nome": "Sal", "ativo": None},
+    ])
+    out = estoque.somente_ativos(df)
+    assert list(out["id"]) == [1]
+
+
+def test_somente_ativos_sem_coluna_retorna_tudo():
+    df = pd.DataFrame([{"id": 1, "nome": "Arroz"}])
+    out = estoque.somente_ativos(df)
+    assert len(out) == 1
+
+
+def _produto_valido():
+    return {
+        "nome": "Arroz",
+        "unidade": "5kg",
+        "qtd_por_cesta": 2,
+        "estoque_atual": 7,
+        "preco_atual": 20.5,
+        "marca": "Camil",
+        "token_tenda": None,
+        "url_tenda": None,
+        "termo_busca": None,
+        "ativo": True,
+    }
+
+
+def test_validar_produto_ok():
+    assert estoque.validar_produto(_produto_valido()) == []
+
+
+def test_validar_produto_nome_unidade_obrigatorios():
+    dados = _produto_valido()
+    dados["nome"] = "  "
+    assert any("nome" in e.lower() for e in estoque.validar_produto(dados))
+    dados = _produto_valido()
+    dados["unidade"] = ""
+    assert any("unidade" in e.lower() for e in estoque.validar_produto(dados))
+
+
+def test_validar_produto_numeros():
+    dados = _produto_valido()
+    dados["qtd_por_cesta"] = 0
+    assert estoque.validar_produto(dados) != []
+    dados = _produto_valido()
+    dados["estoque_atual"] = -1
+    assert estoque.validar_produto(dados) != []
+    dados = _produto_valido()
+    dados["preco_atual"] = -0.5
+    assert estoque.validar_produto(dados) != []
+    dados = _produto_valido()
+    dados["qtd_por_cesta"] = "duas"
+    assert estoque.validar_produto(dados) != []
+
+
+def test_validar_produto_url_invalida():
+    dados = _produto_valido()
+    dados["url_tenda"] = "nao-e-url"
+    assert any("url" in e.lower() for e in estoque.validar_produto(dados))
+    dados["url_tenda"] = "https://www.tendaatacado.com.br/produto/x"
+    assert estoque.validar_produto(dados) == []
+
+
+def test_montar_patch_so_campos_alterados():
+    antigo = {"id": 1, "nome": "Arroz", "marca": "A", "preco_atual": 20.5,
+              "qtd_por_cesta": 2, "estoque_atual": 7}
+    novo = dict(antigo, nome="Arroz Tipo 1", preco_atual=20.5)
+    patch = estoque.montar_patch(antigo, novo)
+    assert patch == {"id": 1, "nome": "Arroz Tipo 1"}
+
+
+def test_montar_patch_nada_alterado():
+    antigo = {"id": 1, "nome": "Arroz", "preco_atual": 20.5}
+    assert estoque.montar_patch(antigo, dict(antigo)) == {}
+
+
+def test_montar_patch_id_e_int_nativo():
+    import numpy as np
+
+    antigo = {"id": np.int64(1), "nome": "Arroz"}
+    patch = estoque.montar_patch(antigo, {"nome": "Arroz Tipo 1"})
+    assert patch["id"] == 1 and type(patch["id"]) is int

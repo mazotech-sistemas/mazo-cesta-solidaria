@@ -59,6 +59,16 @@ def atualizar_produtos(rows, token, *, service=False):
         resp.raise_for_status()
 
 
+def excluir_produto(prod_id: int, token: str) -> None:
+    """Exclui um produto por id (hard delete; historico apaga em cascata)."""
+    resp = requests.delete(
+        f"{_url('produtos')}?id=eq.{prod_id}",
+        headers=_headers(token),
+        timeout=DEFAULT_TIMEOUT,
+    )
+    resp.raise_for_status()
+
+
 def listar_produtos(token, *, service=False):
     resp = requests.get(
         f"{_url('produtos')}?select=*&order=nome.asc",

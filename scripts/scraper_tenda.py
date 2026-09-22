@@ -41,27 +41,19 @@ def main() -> int:
             slug_vencedor = prod["token_tenda"]
             marca_vencedora = ""
             try:
-                if prod.get("termo_busca"):
-                    # Marca mais barata do mesmo produto/peso; token_tenda passa
-                    # a apontar para o vencedor do dia.
-                    vencedor = cliente.buscar_mais_barato(
-                        prod["termo_busca"], unidade_alvo=prod.get("unidade") or ""
+                cotacao = scraper.cotar_produto(prod, cliente)
+                if cotacao is None:
+                    print(
+                        f"[AVISO] {prod['nome']}: nenhum candidato "
+                        f"{prod['termo_busca']!r} com peso {prod.get('unidade')!r}; "
+                        "mantendo preco anterior",
+                        file=sys.stderr,
                     )
-                    if not vencedor:
-                        print(
-                            f"[AVISO] {prod['nome']}: nenhum candidato "
-                            f"{prod['termo_busca']!r} com peso {prod.get('unidade')!r}; "
-                            "mantendo preco anterior",
-                            file=sys.stderr,
-                        )
-                        sem_match += 1
-                        continue
-                    preco = vencedor.preco
-                    slug_vencedor = vencedor.slug
-                    marca_vencedora = vencedor.marca or ""
-                else:
-                    resultado = cliente.buscar_preco_produto(prod["token_tenda"], region_id)
-                    preco = resultado["preco"]
+                    sem_match += 1
+                    continue
+                preco = cotacao["preco"]
+                slug_vencedor = cotacao["slug"]
+                marca_vencedora = cotacao["marca"]
             except Exception as err:
                 falhas += 1
                 print(f"[ERRO] {prod['nome']} ({prod['token_tenda']}): {err}", file=sys.stderr)

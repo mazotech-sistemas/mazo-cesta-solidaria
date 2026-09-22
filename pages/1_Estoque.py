@@ -7,6 +7,7 @@ from src import auth, config, csv_io, db, estoque
 from src.ui import (
     carregar_dias_stale_cached,
     carregar_produtos_cached,
+    confirmation_dialog,
     flash,
     listar_desatualizados,
     load_css,
@@ -19,6 +20,7 @@ load_css()
 render_flash()
 
 user = auth.require_login()
+eh_admin = auth.is_admin(user)
 
 with st.sidebar:
     render_sidebar()
@@ -125,13 +127,15 @@ edited = st.data_editor(
         "qtd_por_cesta": st.column_config.NumberColumn("Qtd/Cesta", format="%.1f", min_value=0, step=0.5),
         "estoque_atual": st.column_config.NumberColumn("Estoque", format="%.1f", min_value=0.0, step=1.0),
     },
-    disabled=["id", "nome", "unidade"],
+    disabled=True if not eh_admin else ["id", "nome", "unidade"],
     hide_index=True,
     width='stretch',
     key="estoque_editor",
 )
 
-if st.button("Salvar Alteracoes", type="primary", width='stretch'):
+if not eh_admin:
+    st.caption("Edicao de estoque restrita a administradores.")
+elif st.button("Salvar Alteracoes", type="primary", width='stretch'):
     original = df[["id", "qtd_por_cesta", "estoque_atual"]].set_index("id")
     novo = edited[["id", "qtd_por_cesta", "estoque_atual"]].set_index("id")
 
@@ -171,7 +175,7 @@ with col_export:
     )
 
 with col_import:
-    if st.button("Importar CSV", width='stretch', type="secondary"):
+    if eh_admin and st.button("Importar CSV", width='stretch', type="secondary"):
         st.session_state["show_import"] = True
 
 # Import uploader (conditional)
@@ -208,7 +212,9 @@ if st.session_state.get("show_import"):
                         with st.expander("Ver alterações"):
                             for alt in diff["alterados"]:
                                 st.write(f"- {alt['produto']}: {alt['campo']} {alt['de']} -> {alt['para']}")
-                    if st.button("Aplicar importação", type="primary", width='stretch'):
+                    if not eh_admin:
+                        st.error("Importacao restrita a administradores.")
+                    elif st.button("Aplicar importação", type="primary", width='stretch'):
                         if st.session_state.get("aplicando_import"):
                             st.info("Importacao em andamento. Aguarde.")
                         else:
@@ -249,11 +255,131 @@ if not desat_df.empty:
 
 # ===== FORMULÁRIO NOVO PRODUTO =====
 formulario_aberto = bool(st.session_state.get("show_new_form"))
-if st.button(
+if not eh_admin:
+    st.caption("Criacao de produtos restrita a administradores.")
+elif st.button(
     "Fechar formulário" if formulario_aberto else "Adicionar Novo Produto",
     width='stretch',
 ):
     st.session_state["show_new_form"] = not formulario_aberto
 
-if st.session_state.get("show_new_form"):
+if st.session_state.get("show_new_form") and eh_admin:
     formulario_novo_produto()
+
+# ===== GERENCIAR PRODUTO (admin): inativar/reativar/excluir =====
+st.divider()
+st.markdown("### Gerenciar produto")
+if not eh_admin:
+    st.caption("Inativar e excluir produtos: restrito a administradores.")
+else:
+    opcoes = {f"{r['nome']} (id {r['id']})": r for _, r in df.iterrows()}
+    escolha = st.selectbox("Produto", list(opcoes.keys()), key="estoque_gerenciar")
+    alvo = opcoes[escolha]
+    alvo_id = int(alvo["id"])
+    alvo_nome = str(alvo.get("nome") or "")
+    esta_ativo = bool(alvo.get("ativo"))
+
+    col_inativar, col_excluir = st.columns(2)
+    with col_inativar:
+        if st.button(
+            "Reativar" if not esta_ativo else "Inativar",
+            width="stretch",
+            key="estoque_toggle_ativo",
+        ):
+            try:
+                db.atualizar_produtos(
+                    [{"id": alvo_id, "ativo": not esta_ativo}], token
+                )
+                flash(
+                    f"Produto {alvo_nome} {'reativado' if not esta_ativo else 'inativado'}!"
+                )
+                st.cache_data.clear()
+                st.rerun()
+            except Exception:
+                traceback.print_exc()
+                st.error("Erro ao atualizar produto. Tente novamente.")
+    with col_excluir:
+        if st.button("Excluir", width="stretch", key="estoque_excluir"):
+            st.session_state["confirm_excluir_produto"] = alvo_id
+            st.session_state["confirm_excluir_produto_dialog"] = True
+
+    if st.session_state.get("confirm_excluir_produto") == alvo_id and confirmation_dialog(
+        f"Excluir {alvo_nome}?",
+        "O historico de precos sera apagado junto. Compras passadas sao preservadas. Acao irreversivel.",
+        confirm_label="Excluir",
+        cancel_label="Cancelar",
+        key="confirm_excluir_produto_dialog",
+    ):
+        try:
+            db.excluir_produto(alvo_id, token)
+            st.session_state.pop("confirm_excluir_produto", None)
+            flash(f"Produto {alvo_nome} excluido.")
+            st.cache_data.clear()
+            st.rerun()
+        except Exception:
+            traceback.print_exc()
+            st.error("Erro ao excluir produto. Tente novamente.")
+
+    with st.expander("Editar dados do produto", expanded=False):
+        def _txt(valor):
+            return "" if valor is None or (isinstance(valor, float) and pd.isna(valor)) else str(valor)
+
+        def _num(valor, padrao=0.0):
+            try:
+                if valor is None or (isinstance(valor, float) and pd.isna(valor)) or valor == "":
+                    return float(padrao)
+                return float(valor)
+            except (TypeError, ValueError):
+                return float(padrao)
+
+        with st.form("editar_produto_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                e_nome = st.text_input("Nome *", value=_txt(alvo.get("nome")))
+                e_marca = st.text_input("Marca", value=_txt(alvo.get("marca")))
+                e_unidade = st.text_input("Unidade *", value=_txt(alvo.get("unidade")))
+                e_qtd = st.number_input(
+                    "Qtd por cesta *", min_value=0.1, value=_num(alvo.get("qtd_por_cesta"), 1.0), step=0.5
+                )
+                e_est = st.number_input(
+                    "Estoque atual", min_value=0.0, value=_num(alvo.get("estoque_atual")), step=1.0
+                )
+            with c2:
+                e_preco = st.number_input(
+                    "Preco unitario (R$)", min_value=0.0, value=_num(alvo.get("preco_atual")), step=0.01
+                )
+                e_token = st.text_input("Token Tenda", value=_txt(alvo.get("token_tenda")))
+                e_url = st.text_input("URL Tenda", value=_txt(alvo.get("url_tenda")))
+                e_termo = st.text_input("Termo de busca", value=_txt(alvo.get("termo_busca")))
+                e_ativo = st.checkbox("Ativo", value=esta_ativo)
+            if st.form_submit_button("Salvar edicao", type="primary"):
+                novo = {
+                    "nome": e_nome.strip(),
+                    "marca": e_marca.strip(),
+                    "unidade": e_unidade.strip(),
+                    "qtd_por_cesta": float(e_qtd),
+                    "estoque_atual": float(e_est),
+                    "preco_atual": float(e_preco),
+                    "token_tenda": e_token.strip() or None,
+                    "url_tenda": e_url.strip() or None,
+                    "termo_busca": e_termo.strip() or None,
+                    "ativo": bool(e_ativo),
+                }
+                erros = estoque.validar_produto(novo)
+                if erros:
+                    for e in erros:
+                        st.error(e)
+                else:
+                    antigo = estoque.limpar_nan([dict(alvo)])[0]
+                    patch = estoque.montar_patch(antigo, novo)
+                    if not patch:
+                        st.info("Nenhuma alteracao detectada.")
+                    else:
+                        try:
+                            db.atualizar_produtos([patch], token)
+                            flash(f"Produto {novo['nome']} atualizado!")
+                            st.cache_data.clear()
+                            st.rerun()
+                        except Exception:
+                            traceback.print_exc()
+                            st.error("Erro ao salvar edicao. Tente novamente.")

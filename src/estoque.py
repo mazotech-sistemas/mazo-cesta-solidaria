@@ -53,3 +53,70 @@ def normalizar_ativo(valor) -> bool:
     if isinstance(valor, bool):
         return valor
     return str(valor).strip().lower() in ("true", "1", "sim", "s", "yes", "t")
+
+
+def somente_ativos(df: pd.DataFrame) -> pd.DataFrame:
+    """Retorna apenas linhas com ativo == True (sem coluna = tudo)."""
+    if df.empty or "ativo" not in df.columns:
+        return df
+    return df[df["ativo"] == True].reset_index(drop=True)  # noqa: E712
+
+
+CAMPOS_EDITAVEIS = (
+    "nome", "marca", "unidade", "qtd_por_cesta", "estoque_atual",
+    "preco_atual", "token_tenda", "url_tenda", "termo_busca", "ativo",
+)
+
+
+def _eh_numero(valor) -> bool:
+    try:
+        float(valor)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def validar_produto(dados: dict) -> list[str]:
+    """Valida um produto para criacao/edicao. Retorna lista de erros."""
+    erros = []
+    if not str(dados.get("nome") or "").strip():
+        erros.append("Nome e obrigatorio")
+    if not str(dados.get("unidade") or "").strip():
+        erros.append("Unidade e obrigatoria")
+    qtd = dados.get("qtd_por_cesta")
+    if not _eh_numero(qtd) or float(qtd) <= 0:
+        erros.append("Qtd por cesta deve ser numerica e maior que zero")
+    for campo in ("estoque_atual", "preco_atual"):
+        valor = dados.get(campo)
+        if valor is None or (isinstance(valor, str) and not valor.strip()):
+            continue
+        if not _eh_numero(valor) or float(valor) < 0:
+            erros.append(f"{campo} deve ser numerico e maior ou igual a zero")
+    url = (dados.get("url_tenda") or "")
+    if isinstance(url, str) and url.strip() and not url.strip().startswith(("http://", "https://")):
+        erros.append("url_tenda deve comecar com http:// ou https://")
+    return erros
+
+
+def montar_patch(antigo: dict, novo: dict) -> dict:
+    """Monta PATCH com id + somente campos editaveis alterados."""
+    patch = {}
+    for campo in CAMPOS_EDITAVEIS:
+        if campo not in novo:
+            continue
+        if not _iguais_patch(antigo.get(campo), novo[campo]):
+            patch[campo] = novo[campo]
+    if patch:
+        patch["id"] = int(antigo.get("id"))
+    return patch
+
+
+def _iguais_patch(a, b) -> bool:
+    if a is b or a == b:
+        return True
+    if pd.isna(a) and pd.isna(b):
+        return True
+    try:
+        return float(a) == float(b)
+    except (TypeError, ValueError):
+        return False

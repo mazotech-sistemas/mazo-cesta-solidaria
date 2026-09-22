@@ -236,3 +236,41 @@ def test_renovar_sessao_corpo_anomalo_retorna_none(monkeypatch):
 
     monkeypatch.setattr(db.requests, "post", fake_post)
     assert db.renovar_sessao("rt-antigo") is None
+
+
+def test_excluir_produto_usa_delete_com_filtro_id(monkeypatch):
+    chamadas = {}
+
+    def fake_delete(url, headers=None, **kw):
+        chamadas["url"] = url
+        chamadas["headers"] = headers
+        chamadas["timeout"] = kw.get("timeout")
+        return FakeResp(None)
+
+    monkeypatch.setattr(db.requests, "delete", fake_delete)
+    db.excluir_produto(42, "tok-admin")
+    assert "rest/v1/produtos" in chamadas["url"]
+    assert "id=eq.42" in chamadas["url"]
+    assert chamadas["timeout"] == db.DEFAULT_TIMEOUT
+
+
+def test_excluir_produto_usa_token_usuario(monkeypatch):
+    chamadas = {}
+
+    def fake_delete(url, headers=None, **kw):
+        chamadas["headers"] = headers
+        return FakeResp(None)
+
+    monkeypatch.setattr(db.requests, "delete", fake_delete)
+    db.excluir_produto(7, "tok-usuario")
+    assert chamadas["headers"]["Authorization"] == "Bearer tok-usuario"
+    assert chamadas["headers"]["apikey"] == "anon-key"
+
+
+def test_excluir_produto_erro_http_propaga(monkeypatch):
+    def fake_delete(url, headers=None, **kw):
+        return FakeResp(None, status=500)
+
+    monkeypatch.setattr(db.requests, "delete", fake_delete)
+    with pytest.raises(RuntimeError):
+        db.excluir_produto(1, "tok")
