@@ -34,7 +34,7 @@ Sistema de gestão de cestas básicas para projetos sociais e instituições de 
 | **Banco/Auth** | Supabase (PostgreSQL + Auth + RLS) |
 | **Automação** | GitHub Actions (cron diário/semanal) |
 | **Deploy** | Streamlit Community Cloud (gratuito) |
-| **Testes** | pytest (100 testes) |
+| **Testes** | pytest (128 testes) |
 
 ---
 
@@ -135,7 +135,7 @@ cesta-solidaria/
 ├── assets/
 │   ├── style.css               # Design system (variáveis, tema)
 │   └── cesta.png               # Logo/favicon
-└── tests/                      # 100 testes (auth, calc, csv, db, scraper, etc)
+└── tests/                      # 128 testes (auth, calc, csv, db, scraper, etc)
 ```
 
 ---
@@ -220,7 +220,7 @@ ou admin-only.
 git checkout -b feat/nova-funcionalidade
 
 # Código + Testes
-pytest -q  # deve passar 100/100
+pytest -q  # deve passar 128/128
 
 # Commit descritivo (sem prefixos feat:/fix:)
 git commit -m "adicionar exportação XLSX no estoque"

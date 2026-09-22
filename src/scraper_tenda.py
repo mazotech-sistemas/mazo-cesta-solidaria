@@ -495,6 +495,28 @@ class TendaScraper:
 # Funções de conveniência (compatibilidade)
 # =========================================================================
 
+def cotar_produto(prod: dict, cliente: TendaScraper) -> dict | None:
+    """Resolve o preco atual de um produto do catalogo.
+
+    Com termo_busca: marca mais barata do mesmo peso/volume (None se
+    nenhum candidato compativel). Sem termo: preco direto do token_tenda.
+    Retorna {"preco": float, "slug": str, "marca": str} ou None.
+    Erros de rede/API propagam para o chamador contabilizar a falha.
+    """
+    if prod.get("termo_busca"):
+        vencedor = cliente.buscar_mais_barato(
+            prod["termo_busca"], unidade_alvo=prod.get("unidade") or ""
+        )
+        if vencedor is None:
+            return None
+        return {
+            "preco": vencedor.preco,
+            "slug": vencedor.slug,
+            "marca": vencedor.marca or "",
+        }
+    resultado = cliente.buscar_preco_produto(prod["token_tenda"], cliente.region_id)
+    return {"preco": resultado["preco"], "slug": prod["token_tenda"], "marca": ""}
+
 def buscar_preco_produto(
     token: str,
     region_id: str | None = None,

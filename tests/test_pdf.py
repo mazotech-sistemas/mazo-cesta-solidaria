@@ -11,3 +11,21 @@ def test_gerar_pdf_retorna_bytes():
     assert b"TOTAL" in out
     assert b"Arroz" in out
     assert b"19/08/2026" in out
+
+
+def test_gerar_pdf_exibe_marca():
+    itens = [
+        {"produto": "Arroz (5kg)", "marca": "Camil", "estoque": 1, "comprar": 3, "custo": 61.5},
+    ]
+    out = pdf.gerar_pdf_lista_compras(itens, 61.5, "19/08/2026 07:00")
+    assert out[:4] == b"%PDF"
+    assert b"Camil" in out
+    assert b"Marca" in out
+
+
+def test_gerar_pdf_sem_marca_mostra_traco():
+    itens = [
+        {"produto": "Arroz (5kg)", "estoque": 1, "comprar": 3, "custo": 61.5},
+    ]
+    out = pdf.gerar_pdf_lista_compras(itens, 61.5, "19/08/2026 07:00")
+    assert out[:4] == b"%PDF"

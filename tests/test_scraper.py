@@ -1,6 +1,13 @@
 import sys
 
-from src.scraper_tenda import Produto, escolher_mais_barato, peso_normalizado
+import pytest
+
+from src.scraper_tenda import (
+    Produto,
+    TendaAPIError,
+    escolher_mais_barato,
+    peso_normalizado,
+)
 
 
 def _p(nome, preco, disponivel=True, slug="x"):
@@ -85,3 +92,63 @@ def test_palavras_comparam_sem_acento_e_ignoram_stopwords():
     # termo "leite condensado desnatado 395g": palavra "desnatado" nao consta
     assert escolher_mais_barato(candidatos, alvo=(395, "g"),
                                 palavras=["leite", "condensado"]) is not None
+
+
+class _ClienteFake:
+    region_id = "000010"
+
+    def __init__(self, vencedor=None, preco=7.35):
+        self._vencedor = vencedor
+        self._preco = preco
+        self.chamadas = []
+
+    def buscar_mais_barato(self, termo, unidade_alvo=""):
+        self.chamadas.append(("mais_barato", termo, unidade_alvo))
+        return self._vencedor
+
+    def buscar_preco_produto(self, token, region_id=None):
+        self.chamadas.append(("preco_direto", token, region_id))
+        return {"preco": self._preco}
+
+
+def test_cotar_com_termo_retorna_vencedor():
+    from src import scraper_tenda
+
+    vencedor = _p("Oleo Vitaliv 900ml", 7.35, slug="oleo-vitaliv-900ml")
+    vencedor.marca = "Vitaliv"
+    cliente = _ClienteFake(vencedor=vencedor)
+    prod = {"id": 1, "nome": "Oleo", "unidade": "900ml", "token_tenda": "antigo", "termo_busca": "oleo de soja 900ml"}
+    cot = scraper_tenda.cotar_produto(prod, cliente)
+    assert cot == {"preco": 7.35, "slug": "oleo-vitaliv-900ml", "marca": "Vitaliv"}
+    assert cliente.chamadas[0][0] == "mais_barato"
+
+
+def test_cotar_com_termo_sem_match_retorna_none():
+    from src import scraper_tenda
+
+    cliente = _ClienteFake(vencedor=None)
+    prod = {"id": 1, "nome": "Oleo", "unidade": "900ml", "token_tenda": "antigo", "termo_busca": "oleo 900ml"}
+    assert scraper_tenda.cotar_produto(prod, cliente) is None
+
+
+def test_cotar_sem_termo_usa_token_direto():
+    from src import scraper_tenda
+
+    cliente = _ClienteFake(preco=2.79)
+    prod = {"id": 2, "nome": "Acucar", "unidade": "1kg", "token_tenda": "acucar-token"}
+    cot = scraper_tenda.cotar_produto(prod, cliente)
+    assert cot == {"preco": 2.79, "slug": "acucar-token", "marca": ""}
+    assert cliente.chamadas[0] == ("preco_direto", "acucar-token", "000010")
+
+
+def test_cotar_erro_de_rede_propaga():
+    from src import scraper_tenda
+
+    class _ClienteErro:
+        region_id = "000010"
+
+        def buscar_preco_produto(self, token, region_id=None):
+            raise TendaAPIError(500, "falha")
+
+    with pytest.raises(TendaAPIError):
+        scraper_tenda.cotar_produto({"id": 1, "token_tenda": "x"}, _ClienteErro())
