@@ -183,6 +183,35 @@ def test_cotar_termo_com_peso_diferente_retorna_none():
     assert cot["slug"] == "arroz-visconde-5kg"
 
 
+def test_cotar_termo_unidade_vazia_extrai_peso_do_nome():
+    """Produto com unidade vazia no banco mas peso no nome deve ser protegido."""
+    from src import scraper_tenda
+
+    class _ClienteFake:
+        region_id = "000010"
+
+        def __init__(self, vencedor):
+            self._vencedor = vencedor
+
+        def buscar_mais_barato(self, termo, unidade_alvo=""):
+            return self._vencedor
+
+        def buscar_preco_produto(self, token, region_id=None):
+            return {"preco": 7.35}
+
+    # Arroz com unidade='' no banco, nome tem (5kg); vencedor 1kg deve ser rejeitado
+    vencedor_1kg = _p("Arroz Tipo 1 1kg", 4.49, slug="arroz-1kg")
+    cliente = _ClienteFake(vencedor=vencedor_1kg)
+    prod = {"id": 25, "nome": "Arroz Tipo 1 (5kg)", "unidade": "", "token_tenda": "antigo", "termo_busca": "arroz 5kg"}
+    assert scraper_tenda.cotar_produto(prod, cliente) is None
+    # Vencedor 5kg deve ser aceito
+    vencedor_5kg = _p("Arroz Tipo 1 Visconde 5kg", 18.49, slug="arroz-visconde-5kg")
+    cliente2 = _ClienteFake(vencedor=vencedor_5kg)
+    cot = scraper_tenda.cotar_produto(prod, cliente2)
+    assert cot is not None
+    assert cot["preco"] == 18.49
+
+
 def test_cotar_termo_sem_unidade_no_produto_aceita_qualquer_peso():
     from src import scraper_tenda
 

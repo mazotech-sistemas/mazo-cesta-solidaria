@@ -504,17 +504,20 @@ def cotar_produto(prod: dict, cliente: TendaScraper) -> dict | None:
     token_tenda. Retorna {"preco": float, "slug": str, "marca": str} ou None.
     Erros de rede/API propagam para o chamador contabilizar a falha.
     """
-    peso_esperado = peso_normalizado(prod.get("unidade") or "")
+    # Unidade pode estar vazia no banco; nesse caso extrair o peso do nome
+    # (ex: "Arroz Tipo 1 (5kg)" -> 5000g).
+    unidade = prod.get("unidade") or ""
+    peso_esperado = peso_normalizado(unidade) or peso_normalizado(prod.get("nome") or "")
     if prod.get("termo_busca"):
         vencedor = cliente.buscar_mais_barato(
-            prod["termo_busca"], unidade_alvo=prod.get("unidade") or ""
+            prod["termo_busca"], unidade_alvo=unidade
         )
         if vencedor is None:
             return None
         # So aceita o vencedor se o peso bater com o esperado.
-        # Produto sem unidade no banco (= peso nao especificado) aceita qualquer
-        # peso. Produto com unidade deve manter o mesmo peso para nao trocar
-        # pacote (ex: 5kg por 1kg).
+        # Produto sem peso especificado (unidade e nome ambos sem peso) aceita
+        # qualquer peso. Produto com peso deve manter o mesmo peso para nao
+        # trocar pacote (ex: 5kg por 1kg).
         peso_venc = peso_normalizado(vencedor.slug + " " + vencedor.nome)
         if peso_esperado and peso_venc and peso_venc != peso_esperado:
             # Diferenca de peso: nao substitui o token; retorna None para o
