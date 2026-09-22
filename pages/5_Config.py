@@ -1,3 +1,4 @@
+import html
 import json
 import traceback
 from datetime import UTC, datetime
@@ -34,12 +35,7 @@ except Exception:
     st.stop()
 
 # ===== REGIOES PRE-CONFIGURADAS =====
-REGIOES_CIDADES = {
-    "000010": "Indaiatuba",
-    "000020": "Salto",
-    "000030": "Itu",
-    "000040": "Campinas",
-}
+# REGIOES_CIDADES definido em src/config.py
 
 # Garantir que regioes pre-configuradas existem no banco (apenas na 1a visita
 # da sessao; nao sobrescreve nomes ja existentes).
@@ -49,7 +45,7 @@ if "_regions_seeded" not in st.session_state:
         regioes_existentes = db.listar_regions(token)
         ids_existentes = {r["region_id"] for r in regioes_existentes}
         novas_regioes = []
-        for rid, nome in REGIOES_CIDADES.items():
+        for rid, nome in config.REGIOES_CIDADES.items():
             if rid not in ids_existentes:
                 novas_regioes.append({"region_id": rid, "nome": nome, "ativo": True})
         if novas_regioes:
@@ -188,7 +184,7 @@ with col1:
                             # para o vencedor (marca mais barata) do dia.
                             cotacao = scraper_tenda.cotar_produto(prod, cliente_scraper)
                             if cotacao is None:
-                                st.caption(f"{prod['nome']}: nenhum candidato com o mesmo peso; preço mantido")
+                                st.caption(f"{html.escape(str(prod['nome']))}: nenhum candidato com o mesmo peso; preço mantido")
                                 continue
                             preco = cotacao["preco"]
                             slug_dia = cotacao["slug"]
@@ -215,7 +211,7 @@ with col1:
                         except Exception:
                             traceback.print_exc()
                             erros += 1
-                            st.warning(f"Erro ao atualizar {prod.get('nome', '?')}. Pulando...")
+                            st.warning(f"Erro ao atualizar {html.escape(str(prod.get('nome', '?')))}. Pulando...")
                         barra.progress((i + 1) / len(com_token))
                     st.success(f"Scraper concluido: {atualizados} atualizados, {erros} erros.")
                 st.cache_data.clear()
@@ -374,9 +370,11 @@ if "token_discovery_result" in st.session_state:
     if result["erros_detalhes"]:
         with st.expander(f"Ver {len(result['erros_detalhes'])} erro(s)"):
             for err in result["erros_detalhes"]:
-                st.write(f"- {err}")
+                st.write(f"- {html.escape(str(err))}")
     if result["tokens_encontrados"]:
         st.markdown("### Tokens Encontrados")
         for item in result["tokens_encontrados"]:
-            st.write(f"- **{item['nome']}**: `{item['token']}`")
+            nome_esc = html.escape(str(item.get("nome") or ""))
+            token_esc = html.escape(str(item.get("token") or ""))
+            st.write(f"- **{nome_esc}**: `{token_esc}`")
     st.success(f"Descoberta concluida: {result['atualizados']} tokens encontrados, {result['erros']} sem resultado.")

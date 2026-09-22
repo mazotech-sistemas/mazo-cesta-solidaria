@@ -1,3 +1,4 @@
+import html
 import traceback
 
 import pandas as pd
@@ -211,7 +212,11 @@ if st.session_state.get("show_import"):
                     if diff["alterados"]:
                         with st.expander("Ver alterações"):
                             for alt in diff["alterados"]:
-                                st.write(f"- {alt['produto']}: {alt['campo']} {alt['de']} -> {alt['para']}")
+                                prod_esc = html.escape(str(alt.get("produto") or ""))
+                                campo_esc = html.escape(str(alt.get("campo") or ""))
+                                de_esc = html.escape(str(alt.get("de") or ""))
+                                para_esc = html.escape(str(alt.get("para") or ""))
+                                st.write(f"- {prod_esc}: {campo_esc} {de_esc} -> {para_esc}")
                     if not eh_admin:
                         st.error("Importacao restrita a administradores.")
                     elif st.button("Aplicar importação", type="primary", width='stretch'):
@@ -248,7 +253,7 @@ if st.session_state.get("show_import"):
 desat_df = listar_desatualizados(df, dias_stale)
 if not desat_df.empty:
     resumo = ", ".join(
-        f"{r['nome']} ({config.formatar_data_hora(r.get('ultima_atualizacao_preco'))})"
+        f"{html.escape(str(r['nome']))} ({config.formatar_data_hora(r.get('ultima_atualizacao_preco'))})"
         for _, r in desat_df.head(5).iterrows()
     )
     st.warning(f"**{len(desat_df)} produto(s) com preco desatualizado:** {resumo}{'...' if len(desat_df) > 5 else ''}")

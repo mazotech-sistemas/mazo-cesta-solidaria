@@ -70,10 +70,6 @@ def test_nao_confunde_g_com_ml():
     assert escolher_mais_barato(candidatos, alvo=(395, "ml")) is None
 
 
-if __name__ == "__main__":
-    sys.exit(0)
-
-
 def test_descarta_produto_fora_do_termo_mesmo_com_peso_certo():
     candidatos = [
         _p("Fubá Mimoso PQ 500g", 2.15),
@@ -92,6 +88,10 @@ def test_palavras_comparam_sem_acento_e_ignoram_stopwords():
     # termo "leite condensado desnatado 395g": palavra "desnatado" nao consta
     assert escolher_mais_barato(candidatos, alvo=(395, "g"),
                                 palavras=["leite", "condensado"]) is not None
+
+
+if __name__ == "__main__":
+    sys.exit(0)
 
 
 class _ClienteFake:

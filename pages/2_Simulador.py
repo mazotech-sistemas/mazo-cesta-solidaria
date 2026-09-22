@@ -1,3 +1,4 @@
+import html
 import json
 import traceback
 
@@ -206,4 +207,4 @@ if desatualizados_rows:
     with st.expander(f"{len(desatualizados_rows)} preços desatualizados (clique para ver)"):
         for r in desatualizados_rows:
             data = config.formatar_data_hora(r.get("ultima_atualizacao_preco"))
-            st.caption(f"- {r['nome']} - última atualização: {data}")
+            st.caption(f"- {html.escape(str(r['nome']))} - última atualização: {data}")

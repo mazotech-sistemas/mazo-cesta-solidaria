@@ -59,7 +59,8 @@ def somente_ativos(df: pd.DataFrame) -> pd.DataFrame:
     """Retorna apenas linhas com ativo == True (sem coluna = tudo)."""
     if df.empty or "ativo" not in df.columns:
         return df
-    return df[df["ativo"] == True].reset_index(drop=True)  # noqa: E712
+    ativos = df["ativo"].apply(normalizar_ativo)
+    return df[ativos].reset_index(drop=True)  # noqa: E712
 
 
 CAMPOS_EDITAVEIS = (

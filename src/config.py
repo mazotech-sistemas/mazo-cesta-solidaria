@@ -6,6 +6,13 @@ FUSO = ZoneInfo("America/Sao_Paulo")
 TENDA_REGION_DEFAULT = "000010"
 PRECO_STALE_DIAS_DEFAULT = 2
 
+REGIOES_CIDADES = {
+    "000010": "Indaiatuba",
+    "000020": "Salto",
+    "000030": "Itu",
+    "000040": "Campinas",
+}
+
 
 def agora_sp() -> datetime:
     return datetime.now(FUSO)

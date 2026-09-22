@@ -80,10 +80,15 @@ with col3:
 
 # Aplicar filtros
 df_filtrado = df.copy()
-if filtro_data and len(filtro_data) == 2:
-    ini, fim = filtro_data
-    datas = pd.to_datetime(df_filtrado["data"], errors="coerce", utc=True).dt.date
-    df_filtrado = df_filtrado[(datas >= ini) & (datas <= fim)]
+if filtro_data:
+    if len(filtro_data) == 1:
+        unica = filtro_data[0]
+        datas = pd.to_datetime(df_filtrado["data"], errors="coerce", utc=True).dt.date
+        df_filtrado = df_filtrado[datas == unica]
+    elif len(filtro_data) == 2:
+        ini, fim = filtro_data
+        datas = pd.to_datetime(df_filtrado["data"], errors="coerce", utc=True).dt.date
+        df_filtrado = df_filtrado[(datas >= ini) & (datas <= fim)]
 if busca:
     busca_lower = busca.lower()
     df_filtrado = df_filtrado[
@@ -138,7 +143,8 @@ for _, compra in df_filtrado.iterrows():
                         )
                 st.dataframe(itens_df, width='stretch', hide_index=True)
         else:
-            st.caption(f"Itens: {compra.get('itens', '-')}")
+            itens_raw = html.escape(str(compra.get('itens', '-')))
+            st.caption(f"Itens: {itens_raw}")
 
 # ===== GRAFICOS =====
 st.divider()
