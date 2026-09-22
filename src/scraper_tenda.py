@@ -498,16 +498,27 @@ class TendaScraper:
 def cotar_produto(prod: dict, cliente: TendaScraper) -> dict | None:
     """Resolve o preco atual de um produto do catalogo.
 
-    Com termo_busca: marca mais barata do mesmo peso/volume (None se
-    nenhum candidato compativel). Sem termo: preco direto do token_tenda.
-    Retorna {"preco": float, "slug": str, "marca": str} ou None.
+    Com termo_busca: marca mais barata do mesmo peso/volume; so substitui o
+    token_tenda se o peso do vencedor bater com o peso do produto no banco
+    (evita trocar 5kg por 1kg sem querer). Sem termo: preco direto do
+    token_tenda. Retorna {"preco": float, "slug": str, "marca": str} ou None.
     Erros de rede/API propagam para o chamador contabilizar a falha.
     """
+    peso_esperado = peso_normalizado(prod.get("unidade") or "")
     if prod.get("termo_busca"):
         vencedor = cliente.buscar_mais_barato(
             prod["termo_busca"], unidade_alvo=prod.get("unidade") or ""
         )
         if vencedor is None:
+            return None
+        # So aceita o vencedor se o peso bater com o esperado.
+        # Produto sem unidade no banco (= peso nao especificado) aceita qualquer
+        # peso. Produto com unidade deve manter o mesmo peso para nao trocar
+        # pacote (ex: 5kg por 1kg).
+        peso_venc = peso_normalizado(vencedor.slug + " " + vencedor.nome)
+        if peso_esperado and peso_venc and peso_venc != peso_esperado:
+            # Diferenca de peso: nao substitui o token; retorna None para o
+            # fluxo saber que o vencedor nao serve e manter o original.
             return None
         return {
             "preco": vencedor.preco,

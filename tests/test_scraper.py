@@ -152,3 +152,56 @@ def test_cotar_erro_de_rede_propaga():
 
     with pytest.raises(TendaAPIError):
         scraper_tenda.cotar_produto({"id": 1, "token_tenda": "x"}, _ClienteErro())
+
+
+def test_cotar_termo_com_peso_diferente_retorna_none():
+    from src import scraper_tenda
+
+    class _ClienteFake:
+        region_id = "000010"
+
+        def __init__(self, vencedor):
+            self._vencedor = vencedor
+
+        def buscar_mais_barato(self, termo, unidade_alvo=""):
+            return self._vencedor
+
+        def buscar_preco_produto(self, token, region_id=None):
+            return {"preco": 7.35}
+
+    # Produto pede 5kg, vencedor veio com 1kg -> deve rejeitar
+    vencedor_1kg = _p("Arroz Tipo 1 1kg", 4.49, slug="arroz-1kg")
+    cliente = _ClienteFake(vencedor=vencedor_1kg)
+    prod = {"id": 1, "nome": "Arroz Tipo 1 (5kg)", "unidade": "5kg", "token_tenda": "antigo", "termo_busca": "arroz 5kg"}
+    assert scraper_tenda.cotar_produto(prod, cliente) is None
+    # Mesmo produto, peso ok -> deve aceitar
+    vencedor_5kg = _p("Arroz Tipo 1 Visconde 5kg", 18.49, slug="arroz-visconde-5kg")
+    cliente2 = _ClienteFake(vencedor=vencedor_5kg)
+    cot = scraper_tenda.cotar_produto(prod, cliente2)
+    assert cot is not None
+    assert cot["preco"] == 18.49
+    assert cot["slug"] == "arroz-visconde-5kg"
+
+
+def test_cotar_termo_sem_unidade_no_produto_aceita_qualquer_peso():
+    from src import scraper_tenda
+
+    class _ClienteFake:
+        region_id = "000010"
+
+        def __init__(self, vencedor):
+            self._vencedor = vencedor
+
+        def buscar_mais_barato(self, termo, unidade_alvo=""):
+            return self._vencedor
+
+        def buscar_preco_produto(self, token, region_id=None):
+            return {"preco": 7.35}
+
+    # Produto sem unidade definida no banco -> aceita qualquer peso
+    vencedor_1kg = _p("Acucar Cristal 1kg", 2.89, slug="acucar-1kg")
+    cliente = _ClienteFake(vencedor=vencedor_1kg)
+    prod = {"id": 2, "nome": "Acucar (1kg)", "unidade": "", "token_tenda": "acucar-old", "termo_busca": "acucar 1kg"}
+    cot = scraper_tenda.cotar_produto(prod, cliente)
+    assert cot is not None
+    assert cot["preco"] == 2.89
