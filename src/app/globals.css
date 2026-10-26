@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy: #021D44;
+    --royal: #0052FA;
+    --royal-m: #0E5DFC;
+    --steel: #4573A7;
+    --ice: #EDEDED;
+    --mint: #00DEB2;
+    --paper: #FFFFFF;
+    --ink: #052049;
+    --label: #1C355E;
+    --line: rgba(2,29,68,.14);
+    --radius: 20px;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-ice text-ink antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-extrabold tracking-[-0.02em] text-navy;
+  }
+
+  ::selection {
+    @apply bg-royal/20 text-royal;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-royal ring-offset-2 ring-offset-paper;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-paper bg-royal rounded-[20px]
+           hover:bg-royal/90 active:bg-royal/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-royal bg-transparent border-2 border-royal rounded-[20px]
+           hover:bg-royal/5 active:bg-royal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-steel hover:text-navy hover:bg-ice/50 rounded-xl
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-paper border-[var(--line)] rounded-[20px] shadow-sm;
+  }
+
+  .card-navy {
+    @apply bg-navy text-paper border-none rounded-[20px] shadow-lg;
+  }
+
+  .input {
+    @apply w-full px-4 py-2.5 text-ink bg-paper border-[var(--line)] rounded-xl
+           placeholder:text-steel/50
+           focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none
+           disabled:bg-ice disabled:cursor-not-allowed
+           transition-colors;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-steel mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full;
+  }
+
+  .badge-primary {
+    @apply bg-navy text-paper;
+  }
+
+  .badge-secondary {
+    @apply bg-royal/10 text-royal;
+  }
+
+  .badge-success {
+    @apply bg-mint/20 text-mint;
+  }
+
+  .badge-warning {
+    @apply bg-amber-100 text-amber-800;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .stat-card {
+    @apply card p-5 flex items-start gap-4 transition-shadow hover:shadow-md;
+  }
+
+  .stat-card-navy {
+    @apply card-navy p-5 flex items-start gap-4;
+  }
+
+  .stat-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0;
+  }
+
+  .stat-icon-royal {
+    @apply bg-royal/10 text-royal;
+  }
+
+  .stat-icon-mint {
+    @apply bg-mint/10 text-mint;
+  }
+
+  .stat-icon-navy {
+    @apply bg-paper/10 text-paper;
+  }
+
+  .stat-value {
+    @apply text-3xl font-extrabold tracking-[-0.02em] leading-tight;
+  }
+
+  .stat-label {
+    @apply text-sm text-steel mt-1;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-steel rounded-xl
+           hover:bg-ice hover:text-navy transition-colors;
+  }
+
+  .sidebar-link-active {
+    @apply bg-royal/10 text-royal font-semibold;
+  }
+
+  .table-header {
+    @apply bg-navy text-paper text-sm font-semibold px-4 py-3;
+  }
+
+  .table-row {
+    @apply border-b border-[var(--line)] hover:bg-ice/50 transition-colors;
+  }
+
+  .table-cell {
+    @apply px-4 py-3 text-sm text-ink;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--line);
+    border-radius: 9999px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "esnext"],
+    "target": "ES2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": false,
+    "outDir": "tests/bdd/.tmp-compile",
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["tests/bdd/**/*.ts"],
+  "exclude": ["node_modules"]
+}

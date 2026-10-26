@@ -1,0 +1,26 @@
+{
+  "cookies": [
+    {
+      "name": "sb-access-token",
+      "value": "mock-access-token-placeholder",
+      "url": "http://localhost:3000"
+    },
+    {
+      "name": "sb-refresh-token",
+      "value": "mock-refresh-token-placeholder",
+      "url": "http://localhost:3000"
+    }
+  ],
+  "origins": [
+    {
+      "url": "http://localhost:3000",
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "sb-localhost-auth-token",
+          "value": "{\"provider\":\"email\",\"token\":\"mock-jwt-token\",\"refresh_token\":\"mock-refresh-token\"}"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import StatsCards from '@/components/dashboard/stats-cards';
+import QuickActions from '@/components/dashboard/quick-actions';
+import Alerts from '@/components/dashboard/alerts';
+import RecentPurchases from '@/components/dashboard/recent-purchases';
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  // Fetch stats
+  const [
+    { count: totalProdutos },
+    { data: produtosEstoqueBaixo },
+    { count: precosDesatualizados },
+    { count: comprasMes },
+  ] = await Promise.all([
+    supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true),
+    supabase.from('produtos').select('id').eq('ativo', true).lte('estoque_atual', 2),
+    supabase.from('produtos')
+      .select('*', { count: 'exact', head: true })
+      .eq('ativo', true)
+      .not('token_tenda', 'is', null)
+      .lt('ultima_atualizacao_preco', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+    supabase.from('compras').select('*', { count: 'exact', head: true })
+      .eq('criado_por', user.id)
+      .gte('criado_em', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+  ]);
+
+  const stats = {
+    totalProdutos: totalProdutos || 0,
+    estoqueBaixo: produtosEstoqueBaixo?.length || 0,
+    precosDesatualizados: precosDesatualizados || 0,
+    comprasMes: comprasMes || 0,
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">
+            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+          </h1>
+          <p className="text-steel mt-1">Visão geral do seu projeto Cesta Solidária</p>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <StatsCards stats={stats} />
+
+      {/* Quick Actions */}
+      <QuickActions isAdmin={profile?.is_admin || false} />
+
+      {/* Alerts */}
+      <Alerts
+        estoqueBaixo={stats.estoqueBaixo}
+        precosDesatualizados={stats.precosDesatualizados}
+      />
+
+      {/* Recent Purchases */}
+      <RecentPurchases userId={user.id} />
+    </div>
+  );
+}
