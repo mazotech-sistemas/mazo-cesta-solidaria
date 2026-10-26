@@ -3,6 +3,12 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto, Json } from '@/types/database';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/components/ui/toast';
 
 interface ItemSelecionado {
   produto_id: number;
@@ -23,6 +29,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [numeroCestas, setNumeroCestas] = useState(1);
+  const { push: toast } = useToast();
 
   const itensSelecionados = useMemo<ItemSelecionado[]>(() => {
     return produtos
@@ -63,6 +70,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
   const handleSalvar = async () => {
     if (itensSelecionados.length === 0) {
       setError('Selecione ao menos um produto');
+      toast('Selecione ao menos um produto', 'error');
       return;
     }
 
@@ -88,6 +96,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
 
     if (err) {
       setError(err.message);
+      toast(err.message, 'error');
       setSaving(false);
       return;
     }
@@ -96,6 +105,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
     setSaved(true);
     setSelecionados({});
     setNumeroCestas(1);
+    toast('Compra salva com sucesso!', 'success');
 
     setTimeout(() => setSaved(false), 4000);
   };
@@ -116,31 +126,31 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
         <div className="card p-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap flex-1">
             <span className="text-sm text-steel">
-              {produtos.length} produto{produtos.length !== 1 ? 's' : ''} disponivel{produtos.length !== 1 ? 'is' : ''}
+              {produtos.length} produto{produtos.length !== 1 ? 's' : ''} disponível{produtos.length !== 1 ? 'is' : ''}
             </span>
             {selecionadosCount > 0 && (
-              <span className="badge badge-primary">{selecionadosCount} selecionado{selecionadosCount !== 1 ? 's' : ''}</span>
+              <Badge variant="primary">{selecionadosCount} selecionado{selecionadosCount !== 1 ? 's' : ''}</Badge>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={selecionarTodos} className="btn-ghost text-xs">
+            <Button variant="ghost" size="sm" onClick={selecionarTodos}>
               Selecionar todos
-            </button>
-            <button onClick={limparSelecao} className="btn-ghost text-xs">
+            </Button>
+            <Button variant="ghost" size="sm" onClick={limparSelecao}>
               Limpar
-            </button>
+            </Button>
           </div>
         </div>
 
         {error && (
-          <div className="badge badge-error w-full justify-center" role="alert">
+          <Badge variant="error" className="w-full justify-center" role="alert">
             {error}
-          </div>
+          </Badge>
         )}
 
         {saved && (
-          <div className="card p-4 bg-mint/10 border-none" role="alert">
-            <div className="flex items-center gap-3">
+          <Card className="p-4 bg-mint/10 border-none" role="alert">
+            <CardContent className="flex items-center gap-3">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-mint flex-shrink-0">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                 <polyline points="22 4 12 14.01 9 11.01" />
@@ -149,21 +159,21 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                 <p className="font-semibold text-navy">Compra salva com sucesso!</p>
                 <p className="text-sm text-steel">{numeroCestas} cesta{numeroCestas > 1 ? 's' : ''} — Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
-        <div className="card overflow-hidden">
+        <Card className="overflow-hidden">
           {produtos.length === 0 ? (
             <div className="p-12 text-center">
               <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-              <h3 className="font-semibold text-navy mb-1">Nenhum produto disponivel</h3>
-              <p className="text-steel">Cadastre produtos no estoque para comecar a simular</p>
+              <h3 className="font-semibold text-navy mb-1">Nenhum produto disponível</h3>
+              <p className="text-steel">Cadastre produtos no estoque para começar a simular</p>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--line)]">
+            <CardContent className="p-0 divide-y divide-[var(--line)]">
               {produtos.map((p) => {
                 const sel = selecionados[p.id];
                 const checked = sel?.checked ?? false;
@@ -189,12 +199,12 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                     </div>
                     {checked && (
                       <div className="flex items-center gap-1">
-                        <input
+                        <Input
                           type="number"
                           min={1}
                           value={qtd}
                           onChange={(e) => handleQuantidade(p.id, parseInt(e.target.value) || 0)}
-                          className="w-16 text-center text-sm px-2 py-1 border-[var(--line)] rounded-lg focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none"
+                          className="w-16 text-center text-sm"
                         />
                         <span className="text-xs text-steel whitespace-nowrap">
                           x{numeroCestas} = R$ {(p.preco_atual * qtd * numeroCestas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -204,85 +214,77 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                   </div>
                 );
               })}
-            </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       </div>
 
       <div className="lg:col-span-1">
-        <div className="card p-6 sticky top-6 space-y-5">
-          <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy">Resumo</h2>
+        <Card className="p-6 sticky top-6 space-y-5">
+          <CardContent className="space-y-5">
+            <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy">Resumo</h2>
 
-          <div>
-            <label htmlFor="num-cestas" className="label">Numero de cestas</label>
-            <input
-              id="num-cestas"
-              type="number"
-              min={1}
-              max={100}
-              value={numeroCestas}
-              onChange={(e) => setNumeroCestas(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-              className="input"
-            />
-          </div>
-
-          {itensSelecionados.length > 0 ? (
-            <>
-              <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-                {itensSelecionados.map(item => (
-                  <div key={item.produto_id} className="flex justify-between text-sm">
-                    <span className="text-steel truncate flex-1">
-                      {item.nome} ({item.quantidade}x)
-                    </span>
-                    <span className="font-medium text-navy ml-2 flex-shrink-0">
-                      R$ {(item.preco * item.quantidade * numeroCestas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-[var(--line)] pt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-steel">Itens</span>
-                  <span className="text-navy">{itensSelecionados.length}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-steel">Cestas</span>
-                  <span className="text-navy">{numeroCestas}</span>
-                </div>
-                <div className="flex justify-between text-lg font-extrabold text-navy pt-2">
-                  <span>Total</span>
-                  <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleSalvar}
-                disabled={saving}
-                className="btn-primary w-full py-3 text-base"
-              >
-                {saving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Salvando...
-                  </span>
-                ) : (
-                  'Salvar Compra'
-                )}
-              </button>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <svg className="w-12 h-12 mx-auto mb-3 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <p className="text-steel text-sm">Selecione produtos para ver o resumo</p>
+            <div>
+              <Label htmlFor="num-cestas">Número de cestas</Label>
+              <Input
+                id="num-cestas"
+                type="number"
+                min={1}
+                max={100}
+                value={numeroCestas}
+                onChange={(e) => setNumeroCestas(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+              />
             </div>
-          )}
-        </div>
+
+            {itensSelecionados.length > 0 ? (
+              <>
+                <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
+                  {itensSelecionados.map(item => (
+                    <div key={item.produto_id} className="flex justify-between text-sm">
+                      <span className="text-steel truncate flex-1">
+                        {item.nome} ({item.quantidade}x)
+                      </span>
+                      <span className="font-medium text-navy ml-2 flex-shrink-0">
+                        R$ {(item.preco * item.quantidade * numeroCestas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-[var(--line)] pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-steel">Itens</span>
+                    <span className="text-navy">{itensSelecionados.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-steel">Cestas</span>
+                    <span className="text-navy">{numeroCestas}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-extrabold text-navy pt-2">
+                    <span>Total</span>
+                    <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleSalvar}
+                  disabled={saving}
+                  className="w-full py-3 text-base"
+                  loading={saving}
+                >
+                  Salvar Compra
+                </Button>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <svg className="w-12 h-12 mx-auto mb-3 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <p className="text-steel text-sm">Selecione produtos para ver o resumo</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

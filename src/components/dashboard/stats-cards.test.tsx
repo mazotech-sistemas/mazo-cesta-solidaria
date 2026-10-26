@@ -38,13 +38,15 @@ describe('StatsCards', () => {
   it('mostra badge de warning quando estoqueBaixo > 0', () => {
     render(<StatsCards stats={mockStats} />);
     const badge = screen.getByText('5 itens');
-    expect(badge).toHaveClass('badge-warning');
+    expect(badge).toHaveClass('bg-amber-100');
+    expect(badge).toHaveClass('text-amber-800');
   });
 
   it('mostra badge de error quando precosDesatualizados > 0', () => {
     render(<StatsCards stats={mockStats} />);
     const badge = screen.getByText('3 itens');
-    expect(badge).toHaveClass('badge-error');
+    expect(badge).toHaveClass('bg-red-100');
+    expect(badge).toHaveClass('text-red-800');
   });
 
   it('não mostra badge quando estoqueBaixo === 0', () => {
@@ -68,9 +70,11 @@ describe('StatsCards', () => {
     expect(screen.getByText('1.500')).toBeInTheDocument();
   });
 
-  it('aplica variant navy no primeiro card', () => {
+  it('primeiro card tem ícone navy', () => {
     render(<StatsCards stats={mockStats} />);
-    const firstCard = screen.getByText('Produtos Cadastrados').closest('.stat-card');
-    expect(firstCard).toHaveClass('stat-card-navy');
+    const firstCard = screen.getByText('Produtos Cadastrados').closest('a');
+    expect(firstCard).toBeInTheDocument();
+    const icon = firstCard?.querySelector('[class*="bg-royal/10"]') || firstCard?.querySelector('[class*="bg-navy"]');
+    expect(icon).toBeInTheDocument();
   });
 });

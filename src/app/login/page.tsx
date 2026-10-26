@@ -4,6 +4,10 @@ import { useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 function LoginForm() {
   const router = useRouter();
@@ -53,32 +57,21 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-ice px-4">
+    <div className="min-h-screen flex items-center justify-center bg-ice px-4 py-12">
       <div className="w-full max-w-md">
         <div className="card p-8">
           {/* Logo Mazotech */}
           <div className="text-center mb-8">
-            <svg className="w-20 h-20 mx-auto mb-4" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mazotech Sistemas">
-              <g transform="translate(150,200)">
-                <polygon points="0,-70 60.6,-35 60.6,35 0,70 -60.6,35 -60.6,-35" fill="#021D44" stroke="#0052FA" strokeWidth="4"/>
-                <polygon points="0,-35 30.3,-17.5 30.3,17.5 0,35 -30.3,17.5 -30.3,-17.5" fill="none" stroke="#0E5DFC" strokeWidth="3"/>
-                <line x1="0" y1="-70" x2="45" y2="-70" stroke="#0052FA" strokeWidth="3"/>
-                <circle cx="48" cy="-70" r="6" fill="#0052FA"/>
-                <line x1="60.6" y1="35" x2="95" y2="35" stroke="#0052FA" strokeWidth="3"/>
-                <circle cx="98" cy="35" r="6" fill="#0052FA"/>
-                <line x1="0" y1="70" x2="-40" y2="70" stroke="#0E5DFC" strokeWidth="3"/>
-                <circle cx="-43" cy="70" r="6" fill="#0E5DFC"/>
-                <line x1="-60.6" y1="-35" x2="-95" y2="-35" stroke="#0E5DFC" strokeWidth="3"/>
-                <circle cx="-98" cy="-35" r="6" fill="#0E5DFC"/>
-                <line x1="60.6" y1="-35" x2="60.6" y2="-65" stroke="#0E5DFC" strokeWidth="3"/>
-                <circle cx="60.6" cy="-68" r="6" fill="#0E5DFC"/>
-                <line x1="-60.6" y1="35" x2="-60.6" y2="65" stroke="#0052FA" strokeWidth="3"/>
-                <circle cx="-60.6" cy="68" r="6" fill="#0052FA"/>
-              </g>
-            </svg>
+            <Image
+              src="/logos/mazotech-com-texto.svg"
+              alt="Mazotech Sistemas"
+              width={280}
+              height={144}
+              className="mx-auto mb-4"
+              priority
+            />
             <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy mb-1">Cesta Solidária</h1>
             <p className="text-steel">Gestão de cestas básicas para projetos sociais</p>
-            <p className="text-xs text-royal font-semibold tracking-widest mt-2">MAZOTECH SISTEMAS</p>
           </div>
 
           <div className="border-t border-[var(--line)] my-6" />
@@ -89,32 +82,31 @@ function LoginForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div>
-              <label htmlFor="email" className="label">Email</label>
-              <input
+              <Label htmlFor="email">Email</Label>
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="input"
                 disabled={loading}
                 required
+                autoFocus
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="label">Senha</label>
-              <input
+              <Label htmlFor="password">Senha</Label>
+              <Input
                 id="password"
                 type="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input"
                 disabled={loading}
                 required
               />
@@ -132,23 +124,14 @@ function LoginForm() {
               </label>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3"
+              className="w-full py-3"
+              loading={loading}
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Entrando...
-                </span>
-              ) : (
-                'Entrar'
-              )}
-            </button>
+              Entrar
+            </Button>
           </form>
 
           <div className="mt-6 text-center">

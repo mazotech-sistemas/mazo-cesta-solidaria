@@ -20,7 +20,7 @@ export default async function UsuariosPage() {
     redirect('/dashboard');
   }
 
-  const { data: usuarios, error } = await supabase
+  const { data: users } = await supabase
     .from('profiles')
     .select('*')
     .order('criado_em', { ascending: false });
@@ -29,21 +29,15 @@ export default async function UsuariosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Gestao de Usuarios</h1>
-          <p className="text-steel mt-1">Administre usuarios e permissoes do sistema</p>
+          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Usuários</h1>
+          <p className="text-steel mt-1">Gerencie os usuários do sistema</p>
         </div>
       </div>
 
-      {error ? (
-        <div className="badge badge-error w-full justify-center" role="alert">
-          Erro ao carregar usuarios: {error.message}
-        </div>
-      ) : (
-        <UsuariosClient
-          usuarios={usuarios || []}
-          currentUserId={user.id}
-        />
-      )}
+      <UsuariosClient
+        users={users || []}
+        currentUserId={user.id}
+      />
     </div>
   );
 }

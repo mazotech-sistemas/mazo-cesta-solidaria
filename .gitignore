@@ -20,3 +20,5 @@ reports
 .idea
 *.swp
 *.swo
+.vercel
+.env*

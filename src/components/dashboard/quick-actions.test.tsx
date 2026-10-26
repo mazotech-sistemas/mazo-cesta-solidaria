@@ -53,8 +53,7 @@ describe('QuickActions', () => {
     render(<QuickActions isAdmin={false} />);
     const cards = screen.getAllByRole('link');
     cards.forEach(card => {
-      expect(card).toHaveClass('card');
-      expect(card).toHaveClass('p-4');
+      expect(card).toHaveClass('block');
     });
   });
 });

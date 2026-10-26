@@ -50,7 +50,8 @@ describe('LoginPage', () => {
     render(<LoginPage />);
     expect(screen.getByText('Cesta Solidária')).toBeInTheDocument();
     expect(screen.getByText('Gestão de cestas básicas para projetos sociais')).toBeInTheDocument();
-    expect(screen.getByText('MAZOTECH SISTEMAS')).toBeInTheDocument();
+    // Logo está no SVG com alt="Mazotech Sistemas"
+    expect(screen.getByAltText('Mazotech Sistemas')).toBeInTheDocument();
   });
 
   it('exibe erro quando email não preenchido', async () => {
@@ -141,9 +142,10 @@ describe('LoginPage', () => {
     const passwordInput = screen.getByLabelText(/senha/i);
     fireEvent.change(passwordInput, { target: { value: 'senha123' } });
     fireEvent.submit(getForm(container));
-    expect(screen.getByText('Entrando...')).toBeInTheDocument();
-    const submitBtn = screen.getByRole('button', { name: /entrando/i });
+    // Botão mostra spinner + "Entrar"
+    const submitBtn = screen.getByRole('button', { name: /entrar/i });
     expect(submitBtn).toBeDisabled();
+    expect(submitBtn).toContainHTML('Entrar');
     resolveSignIn!({ data: {}, error: null });
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/dashboard');

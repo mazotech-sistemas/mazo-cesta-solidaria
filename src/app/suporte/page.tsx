@@ -1,25 +1,40 @@
+'use client';
+
 import Link from 'next/link';
+import Image from 'next/image';
 
 const faq = [
   {
-    pergunta: 'Como faco login no sistema?',
-    resposta: 'Use o email e senha fornecidos pelo administrador do projeto. Se e sua primeira vez, peça ao administrador para criar sua conta.',
+    pergunta: 'Como faço login no sistema?',
+    resposta: 'Use o email e senha fornecidos pelo administrador do projeto. Se é sua primeira vez, peça ao administrador para criar sua conta.',
   },
   {
-    pergunta: 'Como simulo uma cesta basica?',
+    pergunta: 'Como simulo uma cesta básica?',
     resposta: 'Acesse o Simulador pelo menu lateral, selecione os produtos desejados, ajuste as quantidades e clique em Salvar Compra.',
   },
   {
-    pergunta: 'Posso ver as compras de outros usuarios?',
-    resposta: 'Apenas administradores podem visualizar o historico completo de compras. Voluntarios veem apenas suas proprias compras.',
+    pergunta: 'Posso ver as compras de outros usuários?',
+    resposta: 'Apenas administradores podem visualizar o histórico completo de compras. Voluntários veem apenas suas próprias compras.',
   },
   {
-    pergunta: 'Como sao atualizados os precos dos produtos?',
-    resposta: 'Os precos sao atualizados automaticamente via scraper. Administradores podem forcar a atualizacao nas Configuracoes.',
+    pergunta: 'Como são atualizados os preços dos produtos?',
+    resposta: 'Os preços são atualizados automaticamente via scraper. Administradores podem forçar a atualização nas Configurações.',
   },
   {
     pergunta: 'O que significa estoque baixo?',
-    resposta: 'Um produto com estoque baixo tem quantidade inferior ou igual a 2 unidades. Use o Simulador para gerar lista de reposicao.',
+    resposta: 'Um produto com estoque baixo tem quantidade inferior ou igual a 2 unidades. Use o Simulador para gerar lista de reposição.',
+  },
+  {
+    pergunta: 'Como adiciono um novo produto?',
+    resposta: 'Apenas administradores podem adicionar produtos. Acesse a página Estoque e clique em "Novo Produto" no topo.',
+  },
+  {
+    pergunta: 'Como exporto os dados do histórico?',
+    resposta: 'No Histórico, use os filtros de data e busca. Para exportar, administradores podem usar a API ou acessar o banco diretamente.',
+  },
+  {
+    pergunta: 'O sistema funciona offline?',
+    resposta: 'Não. O Cesta Solidária requer conexão com a internet para sincronizar dados com o Supabase.',
   },
 ];
 
@@ -29,27 +44,16 @@ export default function SuportePage() {
       <div className="w-full max-w-3xl space-y-8">
         {/* Header */}
         <div className="text-center">
-          <svg className="w-20 h-20 mx-auto mb-4" viewBox="0 0 800 400" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mazotech Sistemas">
-            <g transform="translate(150,200)">
-              <polygon points="0,-70 60.6,-35 60.6,35 0,70 -60.6,35 -60.6,-35" fill="#021D44" stroke="#0052FA" strokeWidth="4"/>
-              <polygon points="0,-35 30.3,-17.5 30.3,17.5 0,35 -30.3,17.5 -30.3,-17.5" fill="none" stroke="#0E5DFC" strokeWidth="3"/>
-              <line x1="0" y1="-70" x2="45" y2="-70" stroke="#0052FA" strokeWidth="3"/>
-              <circle cx="48" cy="-70" r="6" fill="#0052FA"/>
-              <line x1="60.6" y1="35" x2="95" y2="35" stroke="#0052FA" strokeWidth="3"/>
-              <circle cx="98" cy="35" r="6" fill="#0052FA"/>
-              <line x1="0" y1="70" x2="-40" y2="70" stroke="#0E5DFC" strokeWidth="3"/>
-              <circle cx="-43" cy="70" r="6" fill="#0E5DFC"/>
-              <line x1="-60.6" y1="-35" x2="-95" y2="-35" stroke="#0E5DFC" strokeWidth="3"/>
-              <circle cx="-98" cy="-35" r="6" fill="#0E5DFC"/>
-              <line x1="60.6" y1="-35" x2="60.6" y2="-65" stroke="#0E5DFC" strokeWidth="3"/>
-              <circle cx="60.6" cy="-68" r="6" fill="#0E5DFC"/>
-              <line x1="-60.6" y1="35" x2="-60.6" y2="65" stroke="#0052FA" strokeWidth="3"/>
-              <circle cx="-60.6" cy="68" r="6" fill="#0052FA"/>
-            </g>
-          </svg>
+          <Image
+            src="/logos/mazotech-com-texto.svg"
+            alt="Mazotech Sistemas"
+            width={280}
+            height={144}
+            className="mx-auto mb-4"
+            priority
+          />
           <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy mb-1">Precisa de ajuda?</h1>
-          <p className="text-steel">Cesta Solidaria — Mazotech Sistemas</p>
-          <p className="text-xs text-royal font-semibold tracking-widest mt-2">MAZOTECH SISTEMAS</p>
+          <p className="text-steel">Cesta Solidária — Mazotech Sistemas</p>
         </div>
 
         {/* Contato */}
@@ -65,7 +69,7 @@ export default function SuportePage() {
               </div>
               <div>
                 <p className="font-medium text-navy text-sm">Email</p>
-                <p className="text-steel text-sm">suporte@cestasolidaria.mazotech.com.br</p>
+                <p className="text-steel text-sm">mazotech.sistemas@gmail.com</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -87,7 +91,7 @@ export default function SuportePage() {
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-navy text-sm">Endereco</p>
+                <p className="font-medium text-navy text-sm">Endereço</p>
                 <p className="text-steel text-sm">Indaiatuba, SP — Brasil</p>
               </div>
             </div>
@@ -116,13 +120,13 @@ export default function SuportePage() {
 
         {/* Login link */}
         <div className="text-center">
-          <Link href="/login" className="btn-primary">
+          <Link href="/login" className="btn-primary inline-flex">
             Voltar ao Login
           </Link>
         </div>
 
         <p className="text-center text-xs text-steel/60">
-          Cesta Solidaria v1.0 — Mazotech Sistemas
+          Cesta Solidária v1.0 — Mazotech Sistemas
         </p>
       </div>
     </div>

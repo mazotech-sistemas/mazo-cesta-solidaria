@@ -3,6 +3,13 @@
 import React, { useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Compra, Profile } from '@/types/database';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+import { useToast } from '@/components/ui/toast';
 
 interface HistoricoClientProps {
   compras: (Compra & { profiles?: Profile | null })[];
@@ -26,13 +33,14 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
   const [filterDateStart, setFilterDateStart] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
   const [search, setSearch] = useState('');
+  const { push: toast } = useToast();
 
   const handleExpand = useCallback((id: number) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta compra? Esta acao nao pode ser desfeita.')) {
+    if (!confirm('Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita.')) {
       return;
     }
 
@@ -42,11 +50,12 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
     const { error } = await supabase.from('compras').delete().eq('id', id);
 
     if (error) {
-      alert('Erro ao excluir: ' + error.message);
+      toast('Erro ao excluir: ' + error.message, 'error');
       setDeleting(null);
       return;
     }
 
+    toast('Compra excluída', 'success');
     setDeleting(null);
   };
 
@@ -83,26 +92,26 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
       {/* Filtros */}
       <div className="card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-col sm:flex-row gap-3 flex-wrap flex-1">
-          <input
+          <Input
             type="text"
             placeholder="Buscar por produto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="input sm:w-64"
+            className="sm:w-64"
           />
-          <input
+          <Input
             type="date"
             value={filterDateStart}
             onChange={(e) => setFilterDateStart(e.target.value)}
-            className="input sm:w-40"
+            className="sm:w-40"
             title="Data inicial"
           />
-          <span className="text-steel self-center">ate</span>
-          <input
+          <span className="text-steel self-center">até</span>
+          <Input
             type="date"
             value={filterDateEnd}
             onChange={(e) => setFilterDateEnd(e.target.value)}
-            className="input sm:w-40"
+            className="sm:w-40"
             title="Data final"
           />
         </div>
@@ -112,20 +121,22 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
       </div>
 
       {filtradas.length === 0 ? (
-        <div className="card p-12 text-center">
-          <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="font-semibold text-navy mb-1">Nenhuma compra encontrada</h3>
-          <p className="text-steel">
-            {compras.length === 0
-              ? 'Ainda nao ha compras registradas. Va ao Simulador para criar a primeira.'
-              : 'Tente ajustar os filtros de busca.'}
-          </p>
-        </div>
+        <Card className="p-12 text-center">
+          <CardContent>
+            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 className="font-semibold text-navy mb-1">Nenhuma compra encontrada</h3>
+            <p className="text-steel">
+              {compras.length === 0
+                ? 'Ainda não há compras registradas. Vá ao Simulador para criar a primeira.'
+                : 'Tente ajustar os filtros de busca.'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="card overflow-hidden">
-          <div className="divide-y divide-[var(--line)]">
+        <Card className="overflow-hidden">
+          <CardContent className="p-0 divide-y divide-[var(--line)]">
             {filtradas.map((compra) => {
               const isExpanded = expanded[compra.id];
               const podeExcluir = isAdmin && compra.criado_por !== userId;
@@ -159,7 +170,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                           <p className="font-semibold text-navy">
                             {compra.numero_cestas} cesta{compra.numero_cestas > 1 ? 's' : ''}
                           </p>
-                          <span className="badge badge-secondary">
+                          <Badge variant="secondary">
                             {new Date(compra.criado_em).toLocaleDateString('pt-BR', {
                               day: '2-digit',
                               month: '2-digit',
@@ -167,11 +178,11 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
-                          </span>
-                          {isAdmin && (
-                            <span className={`badge ${compra.profiles?.is_admin ? 'badge-primary' : 'badge-secondary'}`}>
-                              {compra.profiles?.nome || 'Usuario'}
-                            </span>
+                          </Badge>
+                          {isAdmin && compra.profiles && (
+                            <Badge variant={compra.profiles.is_admin ? 'primary' : 'secondary'}>
+                              {compra.profiles.nome}
+                            </Badge>
                           )}
                         </div>
                         <p className="text-steel text-sm">
@@ -184,18 +195,20 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                     </div>
 
                     {podeExcluirPropria && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleDelete(compra.id)}
                         disabled={deleting === compra.id}
-                        className="btn-ghost text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                        className="text-red-700 hover:bg-red-50"
                       >
                         {deleting === compra.id ? 'Excluindo...' : 'Excluir'}
-                      </button>
+                      </Button>
                     )}
                   </div>
 
                   {isExpanded && compra.itens_exibicao.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-[var(--line)]">
+                    <div className="mt-4 pt-4 border-t border-[var(--line)] px-4 pb-4">
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                         {compra.itens_exibicao.map((item, idx) => (
                           <div key={idx} className="p-3 bg-ice/50 rounded-xl">
@@ -214,8 +227,8 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                 </div>
               );
             })}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

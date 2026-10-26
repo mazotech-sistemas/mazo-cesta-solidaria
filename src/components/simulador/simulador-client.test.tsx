@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SimuladorClient from './simulador-client';
 import type { Produto } from '@/types/database';
+import { ToastProvider } from '@/components/ui/toast';
 
 const mockProdutos: Produto[] = [
   {
@@ -52,6 +53,8 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
+const renderWithToast = (ui: React.ReactElement) => render(<ToastProvider>{ui}</ToastProvider>);
+
 describe('SimuladorClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -60,26 +63,26 @@ describe('SimuladorClient', () => {
   });
 
   it('renderiza lista de produtos disponíveis', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     expect(screen.getByText('Arroz 5kg')).toBeInTheDocument();
     expect(screen.getByText('Feijão 1kg')).toBeInTheDocument();
   });
 
   it('exibe contador de produtos disponíveis', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const counter = screen.getByText((content) => content.includes('2 produtos disponivel'));
     expect(counter).toBeInTheDocument();
   });
 
   it('permite selecionar produto via checkbox', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     expect(screen.getByText('1 selecionado')).toBeInTheDocument();
   });
 
   it('permite deselecionar produto', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     fireEvent.click(checkboxes[0]);
@@ -87,7 +90,7 @@ describe('SimuladorClient', () => {
   });
 
   it('atualiza total quando produto selecionado', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     // Total = 25.90 * 1 * 1 = 25.90
@@ -95,7 +98,7 @@ describe('SimuladorClient', () => {
   });
 
   it('permite alterar quantidade do produto selecionado', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     const quantityInputs = screen.getAllByRole('spinbutton');
@@ -105,17 +108,17 @@ describe('SimuladorClient', () => {
   });
 
   it('permite alterar número de cestas', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
-    const cestasInput = screen.getByLabelText(/Numero de cestas/i);
+    const cestasInput = screen.getByLabelText(/Número de cestas/i);
     fireEvent.change(cestasInput, { target: { value: '2' } });
     // Total = 25.90 * 1 * 2 = 51.80
     expect(screen.getAllByText('R$ 51,80')).toHaveLength(2);
   });
 
   it('calcula total combinado com múltiplos produtos', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     fireEvent.click(checkboxes[1]);
@@ -124,7 +127,7 @@ describe('SimuladorClient', () => {
   });
 
   it('exibe resumo lateral com itens selecionados', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     expect(screen.getByText('Arroz 5kg (1x)')).toBeInTheDocument();
@@ -134,7 +137,7 @@ describe('SimuladorClient', () => {
   });
 
   it('botão "Selecionar todos" marca todos os produtos', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const selectAllBtn = screen.getByRole('button', { name: /selecionar todos/i });
     fireEvent.click(selectAllBtn);
     expect(screen.getByText('2 selecionados')).toBeInTheDocument();
@@ -142,7 +145,7 @@ describe('SimuladorClient', () => {
   });
 
   it('botão "Limpar" desmarca todos os produtos', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const selectAllBtn = screen.getByRole('button', { name: /selecionar todos/i });
     fireEvent.click(selectAllBtn);
     const clearBtn = screen.getByRole('button', { name: /limpar/i });
@@ -151,13 +154,13 @@ describe('SimuladorClient', () => {
   });
 
   it('exibe estado vazio quando nenhum produto', () => {
-    render(<SimuladorClient produtos={[]} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={[]} userId={mockUserId} />);
     expect(screen.getByText('Nenhum produto disponivel')).toBeInTheDocument();
     expect(screen.getByText('Cadastre produtos no estoque para comecar a simular')).toBeInTheDocument();
   });
 
   it('não exibe botão salvar quando nenhum produto selecionado', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(2);
     expect(screen.getByText('Selecione produtos para ver o resumo')).toBeInTheDocument();
@@ -165,13 +168,14 @@ describe('SimuladorClient', () => {
   });
 
   it('salva compra com sucesso e mostra confirmação', async () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     const saveBtn = screen.getAllByRole('button')[2];
     fireEvent.click(saveBtn);
     await waitFor(() => {
-      expect(screen.getByText('Compra salva com sucesso!')).toBeInTheDocument();
+      const successElements = screen.getAllByText('Compra salva com sucesso!');
+      expect(successElements.length).toBeGreaterThan(0);
     });
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -184,18 +188,22 @@ describe('SimuladorClient', () => {
 
   it('exibe erro se salvamento falhar', async () => {
     mockInsert.mockResolvedValueOnce({ error: { message: 'Erro no banco' } });
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     const saveBtn = screen.getAllByRole('button')[2];
     fireEvent.click(saveBtn);
     await waitFor(() => {
-      expect(screen.getByText('Erro no banco')).toBeInTheDocument();
+      const errorElements = screen.getAllByText('Erro no banco');
+      expect(errorElements.length).toBeGreaterThan(0);
     });
+    // Fechar o toast clicando no botão de fechar
+    const closeBtn = screen.getByRole('button', { name: /fechar/i });
+    fireEvent.click(closeBtn);
   });
 
   it('limpa seleção após salvar com sucesso', async () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     const saveBtn = screen.getAllByRole('button')[2];
@@ -206,20 +214,20 @@ describe('SimuladorClient', () => {
   });
 
   it('reseta número de cestas para 1 após salvar', async () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
-    const cestasInput = screen.getByLabelText(/Numero de cestas/i);
+    const cestasInput = screen.getByLabelText(/Número de cestas/i);
     fireEvent.change(cestasInput, { target: { value: '5' } });
     const saveBtn = screen.getAllByRole('button')[2];
     fireEvent.click(saveBtn);
     await waitFor(() => {
-      expect(screen.getByLabelText(/Numero de cestas/i)).toHaveValue(1);
+      expect(screen.getByLabelText(/Número de cestas/i)).toHaveValue(1);
     });
   });
 
   it('formata preços em moeda brasileira', () => {
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     expect(screen.getByText('R$ 25,90')).toBeInTheDocument();
     expect(screen.getByText('R$ 8,50')).toBeInTheDocument();
   });
@@ -227,15 +235,18 @@ describe('SimuladorClient', () => {
   it('exibe loading no botão durante salvamento', async () => {
     let resolveInsert: (value: any) => void;
     mockInsert.mockImplementationOnce(() => new Promise((resolve) => { resolveInsert = resolve; }));
-    render(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
+    renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(checkboxes[0]);
     const saveBtn = screen.getAllByRole('button')[2];
     fireEvent.click(saveBtn);
-    expect(screen.getByText('Salvando...')).toBeInTheDocument();
+    // Botão mostra spinner + "Salvar Compra"
+    expect(saveBtn).toBeDisabled();
+    expect(saveBtn).toContainHTML('Salvar Compra');
     resolveInsert!({ error: null });
     await waitFor(() => {
-      expect(screen.getByText('Compra salva com sucesso!')).toBeInTheDocument();
+      const successElements = screen.getAllByText('Compra salva com sucesso!');
+      expect(successElements.length).toBeGreaterThan(0);
     });
   });
 });
