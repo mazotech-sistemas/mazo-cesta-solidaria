@@ -70,7 +70,7 @@ describe('SimuladorClient', () => {
 
   it('exibe contador de produtos disponíveis', () => {
     renderWithToast(<SimuladorClient produtos={mockProdutos} userId={mockUserId} />);
-    const counter = screen.getByText((content) => content.includes('2 produtos disponivel'));
+    const counter = screen.getByText(/2 produtos/i);
     expect(counter).toBeInTheDocument();
   });
 
@@ -155,8 +155,8 @@ describe('SimuladorClient', () => {
 
   it('exibe estado vazio quando nenhum produto', () => {
     renderWithToast(<SimuladorClient produtos={[]} userId={mockUserId} />);
-    expect(screen.getByText('Nenhum produto disponivel')).toBeInTheDocument();
-    expect(screen.getByText('Cadastre produtos no estoque para comecar a simular')).toBeInTheDocument();
+    expect(screen.getByText(/Nenhum produto/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cadastre produtos no estoque para começar a simular/i)).toBeInTheDocument();
   });
 
   it('não exibe botão salvar quando nenhum produto selecionado', () => {

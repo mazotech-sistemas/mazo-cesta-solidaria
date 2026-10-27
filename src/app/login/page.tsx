@@ -65,7 +65,7 @@ function LoginForm() {
             <Image
               src="/logos/mazotech-com-texto.svg"
               alt="Mazotech Sistemas"
-              width={280}
+              width={480}
               height={144}
               className="mx-auto mb-4"
               priority
