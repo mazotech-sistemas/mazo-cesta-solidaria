@@ -17,10 +17,12 @@ export default async function SimuladorPage() {
     .order('nome');
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Simulador de Cesta</h1>
-        <p className="text-steel mt-1">Selecione os produtos e quantidades para simular sua compra</p>
+    <div className="space-y-8">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Simulador de Cesta</h1>
+          <p className="page-subtitle">Selecione os produtos e quantidades para simular sua compra</p>
+        </div>
       </div>
 
       <SimuladorClient

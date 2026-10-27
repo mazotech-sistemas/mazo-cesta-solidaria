@@ -43,10 +43,12 @@ export default async function HistoricoPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Histórico de Compras</h1>
-        <p className="text-steel mt-1">Consulte todas as compras realizadas</p>
+    <div className="space-y-8">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Histórico de Compras</h1>
+          <p className="page-subtitle">Consulte todas as compras realizadas</p>
+        </div>
       </div>
 
       {error ? (

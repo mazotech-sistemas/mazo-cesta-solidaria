@@ -34,11 +34,11 @@ export default async function ConfiguracoesPage() {
   const configMap = Object.fromEntries((configs || []).map(c => [c.chave, c.valor]));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="page-head">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Configurações</h1>
-          <p className="text-steel mt-1">Gerencie regiões, scraper e backup do sistema</p>
+          <h1 className="page-title">Configurações</h1>
+          <p className="page-subtitle">Gerencie regiões, scraper e backup do sistema</p>
         </div>
       </div>
 
