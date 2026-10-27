@@ -22,3 +22,5 @@ reports
 *.swo
 .vercel
 .env*
+__pycache__/
+uv.lock
