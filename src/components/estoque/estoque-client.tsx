@@ -429,7 +429,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 value={novo.preco_atual}
                 onChange={setCampo('preco_atual')}
                 disabled={criando}
-                placeholder="Opcional — scraper preenche depois"
+                placeholder="Opcional - scraper preenche depois"
               />
               <p className="text-xs text-steel mt-1">Deixe em branco se o scraper Tenda deve buscar o preço</p>
             </div>

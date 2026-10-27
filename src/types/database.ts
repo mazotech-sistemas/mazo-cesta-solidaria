@@ -149,7 +149,7 @@ export interface Database {
             foreignKeyName: 'compras_criado_por_fkey';
             columns: ['criado_por'];
             isOneToOne: false;
-            referencedRelation: 'profiles';
+            referencedRelation: 'auth.users';
             referencedColumns: ['id'];
           },
         ];
