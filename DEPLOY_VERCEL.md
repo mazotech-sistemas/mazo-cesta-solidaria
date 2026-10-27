@@ -1,4 +1,4 @@
-# Deploy Cesta Solidária no Vercel — Passo a Passo
+# Deploy Cesta Solidária no Vercel - Passo a Passo
 
 ## 1. Pré-requisitos
 
@@ -42,9 +42,9 @@ No **Dashboard Vercel > Settings > Environment Variables**, adicione **todas** p
 | `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` |
 | `CRON_SECRET` | `segredo-para-cron` | `openssl rand -hex 32` |
 
-> ⚠️ **NUNCA** commite `.env` — use só o dashboard do Vercel.
+> ⚠️ **NUNCA** commite `.env` - use só o dashboard do Vercel.
 
-## 4. Supabase — Preparar Banco de Produção
+## 4. Supabase - Preparar Banco de Produção
 
 ### 4.1 Criar projeto Supabase
 1. Acesse https://supabase.com/dashboard
@@ -106,7 +106,7 @@ vercel --prod
 ## 6. Verificar Cron (Scraper Tenda)
 
 Após deploy, no **Vercel Dashboard > Functions > Cron Jobs**:
-- Deve aparecer: `GET /api/scraper/tenda` — `0 6 * * *` (diário 06:00 UTC = 03:00 BRT)
+- Deve aparecer: `GET /api/scraper/tenda` - `0 6 * * *` (diário 06:00 UTC = 03:00 BRT)
 
 Teste manual:
 ```bash
@@ -167,7 +167,7 @@ npm run build && npm test
 ---
 
 **Arquivos chave do projeto:**
-- `vercel.json` — cron + headers
-- `supabase/migrations/001_initial_schema.sql` — schema completo
-- `scripts/seed.ts` — seed idempotente
-- `.env.example` — template de variáveis
+- `vercel.json` - cron + headers
+- `supabase/migrations/001_initial_schema.sql` - schema completo
+- `scripts/seed.ts` - seed idempotente
+- `.env.example` - template de variáveis

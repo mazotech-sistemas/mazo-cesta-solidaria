@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Cesta Solidária — Mazotech Sistemas',
+  title: 'Cesta Solidária - Mazotech Sistemas',
   description: 'Gestão de cestas básicas para projetos sociais',
   metadataBase: new URL('https://cestasolidaria.mazotech.com.br'),
 };

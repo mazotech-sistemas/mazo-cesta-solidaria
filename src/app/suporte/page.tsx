@@ -53,7 +53,7 @@ export default function SuportePage() {
             priority
           />
           <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy mb-1">Precisa de ajuda?</h1>
-          <p className="text-steel">Cesta Solidária — Mazotech Sistemas</p>
+          <p className="text-steel">Cesta Solidária - Mazotech Sistemas</p>
         </div>
 
         {/* Contato */}
@@ -92,7 +92,7 @@ export default function SuportePage() {
               </div>
               <div>
                 <p className="font-medium text-navy text-sm">Endereço</p>
-                <p className="text-steel text-sm">Indaiatuba, SP — Brasil</p>
+                <p className="text-steel text-sm">Indaiatuba, SP - Brasil</p>
               </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function SuportePage() {
         </div>
 
         <p className="text-center text-xs text-steel/60">
-          Cesta Solidária v1.0 — Mazotech Sistemas
+          Cesta Solidária v1.0 - Mazotech Sistemas
         </p>
       </div>
     </div>

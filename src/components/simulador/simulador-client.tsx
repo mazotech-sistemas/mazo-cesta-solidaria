@@ -157,7 +157,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
               </svg>
               <div>
                 <p className="font-semibold text-navy">Compra salva com sucesso!</p>
-                <p className="text-sm text-steel">{numeroCestas} cesta{numeroCestas > 1 ? 's' : ''} — Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-sm text-steel">{numeroCestas} cesta{numeroCestas > 1 ? 's' : ''} - Total: R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
             </CardContent>
           </Card>
@@ -192,7 +192,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-navy truncate">{p.nome}</p>
-                      {p.marca && <p className="text-xs text-steel">{p.marca} {p.unidade ? '— ' + p.unidade : ''}</p>}
+                      {p.marca && <p className="text-xs text-steel">{p.marca} {p.unidade ? '- ' + p.unidade : ''}</p>}
                     </div>
                     <div className="text-right text-sm">
                       <p className="font-semibold text-navy">R$ {p.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>

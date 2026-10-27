@@ -186,7 +186,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                           )}
                         </div>
                         <p className="text-steel text-sm">
-                          {compra.itens_exibicao.length} item{compra.itens_exibicao.length !== 1 ? 's' : ''} —{' '}
+                          {compra.itens_exibicao.length} item{compra.itens_exibicao.length !== 1 ? 's' : ''} -{' '}
                           <span className="font-semibold text-navy">
                             R$ {compra.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>

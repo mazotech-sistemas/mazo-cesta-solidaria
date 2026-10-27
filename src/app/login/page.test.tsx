@@ -181,6 +181,6 @@ describe('LoginPage', () => {
 
   it('exibe versão no rodapé', () => {
     render(<LoginPage />);
-    expect(screen.getByText('Cesta Solidária v1.0 — Mazotech Sistemas')).toBeInTheDocument();
+    expect(screen.getByText('Cesta Solidária v1.0 - Mazotech Sistemas')).toBeInTheDocument();
   });
 });
