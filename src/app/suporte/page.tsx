@@ -47,8 +47,8 @@ export default function SuportePage() {
           <Image
             src="/logos/mazotech-com-texto.svg"
             alt="Mazotech Sistemas"
-            width={480}
-            height={144}
+            width={400}
+            height={180}
             className="mx-auto mb-4"
             priority
           />

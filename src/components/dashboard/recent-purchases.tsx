@@ -70,7 +70,7 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
         </div>
         <Card className="p-8 text-center">
           <CardContent>
-            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             <h3 className="font-semibold text-navy mb-1">Nenhuma compra registrada</h3>

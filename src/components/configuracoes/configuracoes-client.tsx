@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Regiao } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,8 @@ interface ConfiguracoesClientProps {
   precosDesatualizados: number;
 }
 
-export default function ConfiguracoesClient({ regioes, config, precosDesatualizados }: ConfiguracoesClientProps) {
+export default function ConfiguracoesClient({ regioes: regioesIniciais, config, precosDesatualizados }: ConfiguracoesClientProps) {
+  const [regioes, setRegioes] = useState<Regiao[]>(regioesIniciais);
   const [editingRegiao, setEditingRegiao] = useState<Regiao | null>(null);
   const [savingRegiao, setSavingRegiao] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -66,27 +67,41 @@ export default function ConfiguracoesClient({ regioes, config, precosDesatualiza
       return;
     }
 
+    const { data: atualizadas } = await supabase
+      .from('regions')
+      .select('*')
+      .order('nome');
+    if (atualizadas) setRegioes(atualizadas);
+
     setSavingRegiao(false);
     setEditingRegiao(null);
     setShowAddRegiao(false);
     setNewRegiao({ region_id: '', nome: '', cep_referencia: '' });
     toast('Região salva com sucesso', 'success');
-    window.location.reload();
   };
 
   const handleToggleRegiaoAtivo = async (region_id: string, ativo: boolean) => {
+    setRegioes(prev => prev.map(r => r.region_id === region_id ? { ...r, ativo: !ativo } : r));
     const supabase = createClient();
-    await supabase.from('regions').update({ ativo: !ativo }).eq('region_id', region_id);
+    const { error } = await supabase.from('regions').update({ ativo: !ativo }).eq('region_id', region_id);
+    if (error) {
+      toast('Erro ao atualizar região: ' + error.message, 'error');
+      setRegioes(prev => prev.map(r => r.region_id === region_id ? { ...r, ativo } : r));
+      return;
+    }
     toast(ativo ? 'Região desativada' : 'Região ativada', 'success');
-    window.location.reload();
   };
 
   const handleDeleteRegiao = async (region_id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta região?')) return;
     const supabase = createClient();
-    await supabase.from('regions').delete().eq('region_id', region_id);
+    const { error } = await supabase.from('regions').delete().eq('region_id', region_id);
+    if (error) {
+      toast('Erro ao excluir região: ' + error.message, 'error');
+      return;
+    }
+    setRegioes(prev => prev.filter(r => r.region_id !== region_id));
     toast('Região excluída', 'success');
-    window.location.reload();
   };
 
   const handleExportCSV = () => {

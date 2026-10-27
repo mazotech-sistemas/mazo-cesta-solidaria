@@ -21,9 +21,9 @@ export default async function DashboardLayout({
     .single();
 
   return (
-    <div className="min-h-screen bg-ice flex">
+    <div className="h-screen bg-ice flex overflow-hidden">
       <Sidebar user={user} profile={profile} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 min-w-0 overflow-auto">
         <div className="max-w-7xl mx-auto px-6 py-8">
           {children}
         </div>

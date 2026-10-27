@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { Container } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LoginPage from './page';
 
@@ -28,7 +28,7 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const getForm = (container: Container) => container.querySelector('form') as HTMLFormElement;
+const getForm = (container: RenderResult['container']) => container.querySelector('form') as HTMLFormElement;
 
 describe('LoginPage', () => {
   beforeEach(() => {
@@ -72,7 +72,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('exibe erro para email inválido', async () => {
+  it('exibe erro para email inválido no campo', async () => {
     const { container } = render(<LoginPage />);
     const emailInput = screen.getByLabelText(/email/i);
     fireEvent.change(emailInput, { target: { value: 'email-invalido' } });
@@ -81,6 +81,7 @@ describe('LoginPage', () => {
     fireEvent.submit(getForm(container));
     await waitFor(() => {
       expect(screen.getByText('Email inválido')).toBeInTheDocument();
+      expect(screen.getByLabelText(/email/i)).toHaveAttribute('aria-invalid', 'true');
     });
   });
 

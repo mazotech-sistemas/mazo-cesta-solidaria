@@ -17,7 +17,8 @@ interface UsuariosClientProps {
   currentUserId: string;
 }
 
-export default function UsuariosClient({ users, currentUserId }: UsuariosClientProps) {
+export default function UsuariosClient({ users: usersIniciais, currentUserId }: UsuariosClientProps) {
+  const [users, setUsers] = useState<Profile[]>(usersIniciais);
   const [newUser, setNewUser] = useState({ email: '', senha: '', nome: '', is_admin: false });
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -48,20 +49,21 @@ export default function UsuariosClient({ users, currentUserId }: UsuariosClientP
     setNewUser({ email: '', senha: '', nome: '', is_admin: false });
     setShowModal(false);
     setCreating(false);
-    window.location.reload();
+    refreshUsers();
   };
 
   const handleToggleAdmin = async (userId: string, currentIsAdmin: boolean) => {
     setToggling(userId);
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_admin: !currentIsAdmin } : u));
     const supabase = createClient();
     const { error } = await supabase.from('profiles').update({ is_admin: !currentIsAdmin }).eq('id', userId);
     if (error) {
       toast(error.message, 'error');
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_admin: currentIsAdmin } : u));
     } else {
       toast(`Usuário agora é ${!currentIsAdmin ? 'Administrador' : 'Voluntário'}`, 'success');
     }
     setToggling(null);
-    window.location.reload();
   };
 
   const handleDelete = async (userId: string) => {
@@ -73,10 +75,16 @@ export default function UsuariosClient({ users, currentUserId }: UsuariosClientP
       toast(error.message, 'error');
     } else {
       toast('Usuário excluído', 'success');
+      setUsers(prev => prev.filter(u => u.id !== userId));
     }
     setDeleting(null);
-    window.location.reload();
   };
+
+  async function refreshUsers() {
+    const supabase = createClient();
+    const { data } = await supabase.from('profiles').select('*').order('criado_em', { ascending: false });
+    if (data) setUsers(data);
+  }
 
   return (
     <div className="space-y-4">
@@ -96,8 +104,8 @@ export default function UsuariosClient({ users, currentUserId }: UsuariosClientP
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>ID</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead>Perfil</TableHead>
+                <TableHead>Ativo Desde</TableHead>
                 <TableHead className="text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -105,11 +113,13 @@ export default function UsuariosClient({ users, currentUserId }: UsuariosClientP
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium text-navy">{user.nome}</TableCell>
-                  <TableCell className="text-steel font-mono text-sm">{user.id}</TableCell>
                   <TableCell>
                     <Badge variant={user.is_admin ? 'primary' : 'secondary'}>
                       {user.is_admin ? 'Administrador' : 'Voluntário'}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-steel text-sm">
+                    {user.criado_em ? new Date(user.criado_em).toLocaleDateString('pt-BR') : '-'}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">

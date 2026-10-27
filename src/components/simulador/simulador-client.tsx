@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto, Json } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
+import Link from 'next/link';
 
 interface ItemSelecionado {
   produto_id: number;
@@ -31,7 +32,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
   const [numeroCestas, setNumeroCestas] = useState(1);
   const { push: toast } = useToast();
 
-  const itensSelecionados = useMemo<ItemSelecionado[]>(() => {
+  const itensSelecionados = (() => {
     return produtos
       .filter(p => selecionados[p.id]?.checked)
       .map(p => ({
@@ -41,13 +42,11 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
         quantidade: selecionados[p.id]?.quantidade ?? 1,
         qtd_por_cesta: p.qtd_por_cesta,
       }));
-  }, [produtos, selecionados]);
+  })();
 
-  const total = useMemo(() => {
-    return itensSelecionados.reduce((acc, item) => acc + item.preco * item.quantidade * numeroCestas, 0);
-  }, [itensSelecionados, numeroCestas]);
+  const total = itensSelecionados.reduce((acc, item) => acc + item.preco * item.quantidade * numeroCestas, 0);
 
-  const handleToggle = useCallback((produtoId: number) => {
+  const handleToggle = (produtoId: number) => {
     setSelecionados(prev => {
       const current = prev[produtoId];
       if (current?.checked) {
@@ -57,15 +56,15 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
       }
       return { ...prev, [produtoId]: { checked: true, quantidade: 1 } };
     });
-  }, []);
+  };
 
-  const handleQuantidade = useCallback((produtoId: number, value: number) => {
+  const handleQuantidade = (produtoId: number, value: number) => {
     const clamped = Math.max(0, Math.round(value));
     setSelecionados(prev => ({
       ...prev,
       [produtoId]: { ...prev[produtoId], quantidade: clamped },
     }));
-  }, []);
+  };
 
   const handleSalvar = async () => {
     if (itensSelecionados.length === 0) {
@@ -166,11 +165,14 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
         <Card className="overflow-hidden">
           {produtos.length === 0 ? (
             <div className="p-12 text-center">
-              <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
               <h3 className="font-semibold text-navy mb-1">Nenhum produto disponível</h3>
-              <p className="text-steel">Cadastre produtos no estoque para começar a simular</p>
+              <p className="text-steel mb-4">Cadastre produtos no estoque para começar a simular</p>
+              <Link href="/estoque" className="btn-secondary">
+                Ver Estoque
+              </Link>
             </div>
           ) : (
             <CardContent className="p-0 divide-y divide-[var(--line)]">

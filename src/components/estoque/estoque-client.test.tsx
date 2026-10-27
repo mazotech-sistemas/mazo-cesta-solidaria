@@ -144,6 +144,22 @@ describe('EstoqueClient', () => {
     expect(screen.getByText('Nenhum produto encontrado')).toBeInTheDocument();
   });
 
+  it('exibe estado vazio de cadastro para admin sem produtos', () => {
+    const { unmount } = render(<EstoqueClient produtos={[]} isAdmin={true} />);
+    expect(screen.getByText('Nenhum produto cadastrado')).toBeInTheDocument();
+    // Botões "Novo Produto": um na barra de filtros e um no empty state
+    const btns = screen.getAllByRole('button', { name: /novo produto/i });
+    expect(btns.length).toBeGreaterThanOrEqual(1);
+    unmount();
+  });
+
+  it('exibe estado vazio de cadastro sem ação para voluntário sem produtos', () => {
+    const { unmount } = render(<EstoqueClient produtos={[]} isAdmin={false} />);
+    expect(screen.getByText('Fale com o administrador para cadastrar produtos')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /novo produto/i })).not.toBeInTheDocument();
+    unmount();
+  });
+
   it('formata preço em moeda brasileira', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
     expect(screen.getByText('R$ 25,90')).toBeInTheDocument();

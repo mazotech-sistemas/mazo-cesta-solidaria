@@ -157,6 +157,7 @@ describe('SimuladorClient', () => {
     renderWithToast(<SimuladorClient produtos={[]} userId={mockUserId} />);
     expect(screen.getByText(/Nenhum produto/i)).toBeInTheDocument();
     expect(screen.getByText(/Cadastre produtos no estoque para começar a simular/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver estoque/i })).toBeInTheDocument();
   });
 
   it('não exibe botão salvar quando nenhum produto selecionado', () => {

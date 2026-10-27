@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Compra, Profile } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface HistoricoClientProps {
   compras: (Compra & { profiles?: Profile | null })[];
@@ -33,14 +35,16 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
   const [filterDateStart, setFilterDateStart] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
   const [search, setSearch] = useState('');
+  const router = useRouter();
   const { push: toast } = useToast();
 
-  const handleExpand = useCallback((id: number) => {
+  const handleExpand = (id: number) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-  }, []);
+  };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta compra? Esta ação não pode ser desfeita.')) {
+    const confirmando = window.confirm('Excluir esta compra? Esta ação não pode ser desfeita.');
+    if (!confirmando) {
       return;
     }
 
@@ -55,8 +59,9 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
       return;
     }
 
-    toast('Compra excluída', 'success');
     setDeleting(null);
+    toast('Compra excluída', 'success');
+    router.refresh();
   };
 
   const filtradas = compras
@@ -104,7 +109,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
             value={filterDateStart}
             onChange={(e) => setFilterDateStart(e.target.value)}
             className="sm:w-40"
-            title="Data inicial"
+            aria-label="Data inicial"
           />
           <span className="text-steel self-center">até</span>
           <Input
@@ -112,7 +117,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
             value={filterDateEnd}
             onChange={(e) => setFilterDateEnd(e.target.value)}
             className="sm:w-40"
-            title="Data final"
+            aria-label="Data final"
           />
         </div>
         <span className="text-sm text-steel">
@@ -123,15 +128,20 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
       {filtradas.length === 0 ? (
         <Card className="p-12 text-center">
           <CardContent>
-            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h3 className="font-semibold text-navy mb-1">Nenhuma compra encontrada</h3>
-            <p className="text-steel">
+            <p className="text-steel mb-4">
               {compras.length === 0
                 ? 'Ainda não há compras registradas. Vá ao Simulador para criar a primeira.'
                 : 'Tente ajustar os filtros de busca.'}
             </p>
+            {compras.length === 0 && (
+              <Link href="/simulador" className="btn-primary inline-flex mt-2">
+                Ir para Simulador
+              </Link>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -139,8 +149,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
           <CardContent className="p-0 divide-y divide-[var(--line)]">
             {filtradas.map((compra) => {
               const isExpanded = expanded[compra.id];
-              const podeExcluir = isAdmin && compra.criado_por !== userId;
-              const podeExcluirPropria = isAdmin || compra.criado_por === userId;
+              const podeExcluir = isAdmin || compra.criado_por === userId;
 
               return (
                 <div key={compra.id} className="p-4 hover:bg-ice/50 transition-colors">
@@ -194,7 +203,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                       </div>
                     </div>
 
-                    {podeExcluirPropria && (
+                    {podeExcluir && (
                       <Button
                         variant="ghost"
                         size="sm"

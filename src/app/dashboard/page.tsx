@@ -35,7 +35,7 @@ export default async function DashboardPage() {
       .lt('ultima_atualizacao_preco', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('compras').select('*', { count: 'exact', head: true })
       .eq('criado_por', user.id)
-      .gte('criado_em', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+      .gte('criado_em', new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0, 0).toISOString()),
   ]);
 
   const stats = {

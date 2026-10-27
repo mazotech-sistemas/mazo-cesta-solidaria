@@ -18,6 +18,8 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
@@ -25,16 +27,20 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setEmailError('');
+    setPasswordError('');
     setLoading(true);
 
     if (!email.trim() || !password) {
       setError('Preencha email e senha');
+      setEmailError('');
+      setPasswordError('');
       setLoading(false);
       return;
     }
 
     if (!email.includes('@')) {
-      setError('Email inválido');
+      setEmailError('Email inválido');
       setLoading(false);
       return;
     }
@@ -65,8 +71,8 @@ function LoginForm() {
             <Image
               src="/logos/mazotech-com-texto.svg"
               alt="Mazotech Sistemas"
-              width={480}
-              height={144}
+              width={400}
+              height={180}
               className="mx-auto mb-4"
               priority
             />
@@ -95,6 +101,8 @@ function LoginForm() {
                 disabled={loading}
                 required
                 autoFocus
+                aria-invalid={emailError ? true : undefined}
+                error={emailError}
               />
             </div>
 
@@ -109,6 +117,8 @@ function LoginForm() {
                 placeholder="••••••••"
                 disabled={loading}
                 required
+                aria-invalid={passwordError ? true : undefined}
+                error={passwordError}
               />
             </div>
 

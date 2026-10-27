@@ -15,7 +15,7 @@ function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableEleme
 function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn('bg-navy text-paper text-sm', className)}
+      className={cn('bg-navy text-paper text-sm sticky top-0 z-10', className)}
       {...props}
     />
   );
