@@ -48,12 +48,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="page-head">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">
-            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}!
+          <h1 className="page-title">
+            Bem-vindo, {profile?.nome?.split(' ')[0] || 'Usuário'}
           </h1>
-          <p className="text-steel mt-1">Visão geral do seu projeto Cesta Solidária</p>
+          <p className="page-subtitle">Visão geral do seu projeto Cesta Solidária</p>
         </div>
       </div>
 

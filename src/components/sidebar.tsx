@@ -35,38 +35,45 @@ export default function Sidebar({ user, profile }: SidebarProps) {
   }
 
   return (
-    <aside className="w-64 bg-paper border-r border-[var(--line)] flex flex-col h-screen sticky top-0">
+    <aside className="w-[280px] navy-panel flex flex-col h-screen sticky top-0">
       {/* Header */}
-      <div className="p-5 border-b border-[var(--line)]">
+      <div className="p-6 pb-4">
         <Link href="/dashboard" className="flex items-center gap-3 mb-6" aria-label="Cesta Solidária - Dashboard">
-          <Image
-            src="/logos/mazotech-sem-texto.svg"
-            alt="Mazotech Sistemas"
-            width={32}
-            height={32}
-            className="flex-shrink-0"
-            priority
-          />
-          <span className="font-extrabold text-navy tracking-[-0.02em] text-base">Cesta Solidária</span>
+          <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+            <Image
+              src="/logos/mazotech-sem-texto.svg"
+              alt="Mazotech Sistemas"
+              width={28}
+              height={28}
+              className="flex-shrink-0 invert"
+              priority
+            />
+          </div>
+          <div className="leading-tight">
+            <span className="font-extrabold tracking-[-0.02em] text-[17px] block text-paper">Cesta Solidária</span>
+            <span className="text-[11px] tracking-widest uppercase text-white/60 font-semibold">Mazotech Sistemas</span>
+          </div>
         </Link>
-        <p className="text-xs text-royal font-semibold tracking-widest uppercase">MAZOTECH SISTEMAS</p>
       </div>
 
       {/* User */}
-      <div className="px-4 py-3 border-b border-[var(--line)]">
+      <div className="px-6 py-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-navy text-paper flex items-center justify-center font-extrabold text-sm">
+          <div className="w-11 h-11 rounded-2xl bg-white/10 text-paper flex items-center justify-center font-extrabold text-[14px]">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-navy truncate">{userName}</p>
-            <p className="text-xs text-steel capitalize">{profile?.is_admin ? 'Administrador' : 'Voluntário'}</p>
+            <p className="font-medium text-paper truncate text-[14px]">{userName}</p>
+            <p className="text-xs text-white/60 capitalize">{profile?.is_admin ? 'Administrador' : 'Voluntário'}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Navegação principal">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-thin" aria-label="Navegação principal">
+        <div className="px-3 pb-2 text-[10px] font-semibold text-white/40 uppercase tracking-widest">
+          Principal
+        </div>
         {navItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
@@ -83,8 +90,8 @@ export default function Sidebar({ user, profile }: SidebarProps) {
 
         {profile?.is_admin && (
           <>
-            <div className="pt-3 mt-3 border-t border-[var(--line)]">
-              <p className="px-3 text-xs font-semibold text-steel/60 tracking-wider uppercase mb-2">
+            <div className="px-3 pt-4 mt-4 border-t border-white/10">
+              <p className="px-0 pb-2 text-[10px] font-semibold text-white/40 uppercase tracking-widest">
                 Administração
               </p>
               {adminNavItems.map((item) => {
@@ -106,17 +113,17 @@ export default function Sidebar({ user, profile }: SidebarProps) {
       </nav>
 
       {/* Footer / Logout */}
-      <div className="p-4 border-t border-[var(--line)]">
+      <div className="p-6 pt-4 mt-auto border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="btn-secondary w-full justify-center gap-2"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white/80 hover:text-paper hover:bg-white/10 rounded-[12px] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           Sair
         </button>
-        <p className="mt-4 text-center text-xs text-steel/50">Cesta Solidária v1.0</p>
+        <p className="mt-4 text-center text-xs text-white/30">Cesta Solidária v1.0</p>
       </div>
     </aside>
   );

@@ -50,42 +50,40 @@ export default function Alerts({ estoqueBaixo, precosDesatualizados }: AlertsPro
   if (alerts.length === 0) {
     return (
       <section>
-        <Card className="p-5">
-          <CardContent className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-mint/10 text-mint flex items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-navy">Tudo em ordem!</h3>
-              <p className="text-steel text-sm">Seu estoque está atualizado e os preços sincronizados</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="surface surface-strong p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-mint/10 text-mint flex items-center justify-center flex-shrink-0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-semibold text-navy text-[17px]">Tudo em ordem!</h3>
+            <p className="text-steel text-sm mt-0.5">Seu estoque está atualizado e os preços sincronizados</p>
+          </div>
+        </div>
       </section>
     );
   }
 
   return (
     <section>
-      <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy mb-4">Próximas Ações Sugeridas</h2>
+      <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy mb-4">Próximas Ações Sugeridas</h2>
       <div className="space-y-3">
         {alerts.map((alert, index) => (
           <Link
             key={index}
             href={alert.href}
-            className={`block p-4 flex items-start gap-4 hover:shadow-md transition-shadow ${alert.borderColor}`}
+            className={`block surface surface-strong p-5 flex items-start gap-4 hover:shadow-[0_4px_12px_rgba(2,29,68,0.08)] transition-all hover:-translate-y-0.5 ${alert.borderColor}`}
           >
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${alert.iconBg}`}>
               {alert.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-navy">{alert.title}</h3>
+              <h3 className="font-semibold text-navy text-[15px]">{alert.title}</h3>
               <p className="text-steel text-sm mt-1">{alert.description}</p>
             </div>
-            <svg className="w-5 h-5 text-steel/50 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-steel/40 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>

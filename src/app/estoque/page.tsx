@@ -24,10 +24,10 @@ export default async function EstoquePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="page-head">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy">Estoque</h1>
-          <p className="text-steel mt-1">Gerencie os produtos e seus preços</p>
+          <h1 className="page-title">Estoque</h1>
+          <p className="page-subtitle">Gerencie os produtos e seus preços</p>
         </div>
       </div>
 

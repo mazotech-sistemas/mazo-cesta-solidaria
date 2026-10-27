@@ -56,8 +56,42 @@
            transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  .navy-panel {
+    @apply bg-navy text-paper relative overflow-hidden;
+  }
+
+  .navy-panel::before {
+    content: '';
+    @apply absolute inset-0 opacity-[0.04] pointer-events-none;
+    background-image: linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
   .card {
     @apply bg-paper border-[var(--line)] rounded-[20px] shadow-sm;
+  }
+
+  .card-elevated {
+    @apply bg-paper border-[var(--line)] rounded-[20px] shadow-[0_1px_3px_rgba(2,29,68,0.08)];
+  }
+
+  .surface {
+    @apply bg-ice/60 border border-[var(--line)] rounded-[20px];
+  }
+
+  .surface-strong {
+    @apply bg-paper border border-[var(--line)] rounded-[20px];
+  }
+
+  .stat-card {
+    @apply bg-navy text-paper rounded-[20px] p-6 relative overflow-hidden;
+  }
+
+  .stat-card::after {
+    content: '';
+    @apply absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-[0.06] pointer-events-none;
+    background: radial-gradient(circle, white 0%, transparent 70%);
   }
 
   .card-navy {
@@ -133,12 +167,36 @@
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium text-steel rounded-xl
-           hover:bg-ice hover:text-navy transition-colors;
+    @apply flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-steel/80 rounded-[12px]
+           hover:bg-white/5 hover:text-paper transition-colors duration-150;
   }
 
   .sidebar-link-active {
-    @apply bg-royal/10 text-royal font-semibold;
+    @apply bg-white/10 text-paper font-semibold border-l-2 border-mint;
+  }
+
+  .page-head {
+    @apply flex items-start justify-between gap-4 pb-6 border-b border-[var(--line)] mb-8;
+  }
+
+  .page-title {
+    @apply text-[2rem] font-extrabold tracking-[-0.03em] text-navy leading-[1.1];
+  }
+
+  .page-subtitle {
+    @apply text-steel mt-1.5 text-[15px] leading-relaxed;
+  }
+
+  .navy-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-paper text-xs font-semibold uppercase tracking-wider;
+  }
+
+  .metric {
+    @apply text-[2.75rem] font-extrabold tracking-[-0.03em] leading-none text-current;
+  }
+
+  .metric-label {
+    @apply text-[13px] font-medium text-current/70 mt-2 uppercase tracking-wide;
   }
 
   .table-header {

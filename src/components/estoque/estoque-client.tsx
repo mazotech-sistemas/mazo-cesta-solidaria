@@ -225,14 +225,15 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex-1 min-w-64">
+      <div className="surface surface-strong p-4 flex items-center gap-3 flex-wrap">
+        <div className="flex-1 min-w-[240px]">
           <Input
             type="text"
             placeholder="Buscar por nome ou marca..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Buscar por nome ou marca"
+            className="bg-paper"
           />
         </div>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -242,7 +243,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             onChange={(e) => setShowLowStock(e.target.checked)}
             className="w-4 h-4 text-royal border-[var(--line)] rounded focus:ring-2 focus:ring-royal/20"
           />
-          <span className="text-sm text-steel">Só estoque baixo (≤2)</span>
+          <span className="text-sm text-steel font-medium">Só estoque baixo (≤2)</span>
         </label>
         {isAdmin && (
           <>
@@ -277,9 +278,8 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       </div>
 
       {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {filtered.length === 0 ? (
+      <div className="surface surface-strong overflow-hidden">
+        {filtered.length === 0 ? (
             <div className="p-12 text-center">
               <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -348,8 +348,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
       <p className="text-xs text-steel/60">
         Mostrando {filtered.length} de {produtos.length} produto{produtos.length !== 1 ? 's' : ''}

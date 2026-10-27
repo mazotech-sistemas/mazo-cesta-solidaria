@@ -74,25 +74,30 @@ export default function StatsCards({ stats }: StatsCardsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card) => (
-        <Link key={card.label} href={card.href} className="block">
-          <Card className="p-5 flex items-start gap-4 transition-shadow hover:shadow-md">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      {cards.map((card, idx) => (
+        <Link key={card.label} href={card.href} className="block group">
+          <div className={`
+            ${idx === 0 ? 'xl:col-span-2' : ''}
+            stat-card flex items-start gap-4 transition-transform group-hover:translate-y-[-2px]
+          `}>
             <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${card.iconBg}`}>
               {card.icon}
             </div>
-            <CardContent className="flex-1 min-w-0">
-              <div className="text-3xl font-extrabold tracking-[-0.02em] leading-tight text-navy">
+            <div className="flex-1 min-w-0 pt-1">
+              <div className="metric">
                 {card.value}
               </div>
-              <div className="text-sm text-steel mt-1">{card.label}</div>
+              <div className="metric-label text-white/70">
+                {card.label}
+              </div>
               {card.badge && (
-                <Badge variant={card.badgeVariant} className="mt-2">
+                <Badge variant={card.badgeVariant} className="mt-3">
                   {card.badge}
                 </Badge>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </Link>
       ))}
     </div>

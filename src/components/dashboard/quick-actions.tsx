@@ -43,22 +43,20 @@ export default function QuickActions({ isAdmin }: QuickActionsProps) {
 
   return (
     <section>
-      <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy mb-4">Ações Rápidas</h2>
+      <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy mb-4">Ações Rápidas</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {allActions.map((action) => (
           <Link
             key={action.label}
             href={action.href}
-            className="block"
+            className="block group"
           >
-            <Card className="p-4 flex flex-col items-center gap-3 hover:shadow-md transition-shadow text-center">
-              <CardContent className="w-full">
-                <div className="w-12 h-12 rounded-xl bg-royal/10 text-royal flex items-center justify-center mx-auto">
-                  {action.icon}
-                </div>
-                <span className="font-medium text-navy text-sm mt-3 block">{action.label}</span>
-              </CardContent>
-            </Card>
+            <div className="surface surface-strong p-4 flex flex-col items-center gap-3 hover:shadow-[0_4px_12px_rgba(2,29,68,0.08)] transition-all group-hover:-translate-y-0.5 text-center">
+              <div className="w-12 h-12 rounded-xl bg-royal/10 text-royal flex items-center justify-center mx-auto group-hover:bg-royal/15 transition-colors">
+                {action.icon}
+              </div>
+              <span className="font-medium text-navy text-sm mt-1 block">{action.label}</span>
+            </div>
           </Link>
         ))}
       </div>
