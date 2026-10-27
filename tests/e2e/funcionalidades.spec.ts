@@ -15,11 +15,12 @@ test.describe('Estoque - Preco Opcional', () => {
 
     // Abrir formulário de novo produto
     await page.click('button:has-text("Novo Produto")');
-    await expect(page.locator('text=Novo Produto')).toBeVisible();
+    // Aguardar dialog abrir - título é h2
+    await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
 
     // Verificar que o campo preço NÃO tem required
     const precoInput = page.locator('#prod-preco');
-    await expect(precoInput).nottoHaveAttribute('required');
+    await expect(precoInput).not.toHaveAttribute('required');
 
     // Preencher apenas campos obrigatórios (sem preço)
     await page.fill('#prod-nome', 'Arroz Teste 5kg');
@@ -42,7 +43,7 @@ test.describe('Estoque - Buscar Token Tenda', () => {
     await page.goto('/estoque');
 
     await page.click('button:has-text("Novo Produto")');
-    await expect(page.locator('text=Novo Produto')).toBeVisible();
+    await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
 
     // Botão "Buscar Token" deve estar presente
     const buscarBtn = page.locator('button:has-text("Buscar Token")');
