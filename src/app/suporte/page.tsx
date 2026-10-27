@@ -80,7 +80,7 @@ export default function SuportePage() {
               </div>
               <div>
                 <p className="font-medium text-navy text-sm">Telefone</p>
-                <p className="text-steel text-sm">(19) 3481-0000</p>
+                <p className="text-steel text-sm">(19) 99837-4154</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
