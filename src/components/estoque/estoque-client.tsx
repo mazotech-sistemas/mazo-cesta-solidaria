@@ -45,6 +45,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [novo, setNovo] = useState<NovoProduto>(produtoVazio);
   const [criando, setCriando] = useState(false);
+  const [buscandoToken, setBuscandoToken] = useState(false);
   const [formError, setFormError] = useState('');
 
   const { push: toast } = useToast();
@@ -66,7 +67,6 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
 
     const camposObrigatorios: Array<{ campo: keyof NovoProduto; rotulo: string }> = [
       { campo: 'nome', rotulo: 'nome' },
-      { campo: 'preco_atual', rotulo: 'preço' },
       { campo: 'qtd_por_cesta', rotulo: 'quantidade por cesta' },
       { campo: 'estoque_atual', rotulo: 'estoque atual' },
     ];
@@ -82,9 +82,9 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       nome: novo.nome.trim(),
       marca: novo.marca.trim() || null,
       unidade: novo.unidade.trim() || null,
-      qtd_por_cesta: parseFloat(novo.qtd_por_cesta),
-      estoque_atual: parseFloat(novo.estoque_atual),
-      preco_atual: parseFloat(novo.preco_atual),
+      qtd_por_cesta: parseFloat(novo.qtd_por_cesta) || 1,
+      estoque_atual: parseFloat(novo.estoque_atual) || 0,
+      preco_atual: novo.preco_atual.trim() ? parseFloat(novo.preco_atual) : 0,
       token_tenda: novo.token_tenda.trim() || null,
       termo_busca: novo.termo_busca.trim() || null,
       ativo: true,
@@ -108,10 +108,118 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
     setNovo(prev => ({ ...prev, [campo]: e.target.value }));
   };
 
+  const handleBuscarToken = async () => {
+    const termo = novo.termo_busca.trim();
+    if (!termo) {
+      setFormError('Digite um termo de busca primeiro');
+      return;
+    }
+
+    setBuscandoToken(true);
+    setFormError('');
+
+    try {
+      const res = await fetch('/api/scraper/buscar-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ termo_busca: termo }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setFormError(data.error || 'Erro ao buscar token');
+        return;
+      }
+
+      setNovo(prev => ({
+        ...prev,
+        token_tenda: data.token || '',
+        termo_busca: termo,
+      }));
+      toast('Token encontrado: ' + data.token, 'success');
+    } catch (err) {
+      setFormError('Erro de conexão: ' + (err instanceof Error ? err.message : 'erro'));
+    } finally {
+      setBuscandoToken(false);
+    }
+  };
+
   const abrirNovoProduto = () => {
     setNovo(produtoVazio);
     setFormError('');
     setShowNovoProduto(true);
+  };
+
+  const handleExportarCSV = () => {
+    const headers = ['nome','marca','unidade','qtd_por_cesta','estoqueAtual','precoAtual','tokenTenda','termoBusca'];
+    const linhas = produtos.map(p => [
+      p.nome,
+      p.marca || '',
+      p.unidade || '',
+      p.qtd_por_cesta,
+      p.estoque_atual,
+      p.preco_atual,
+      p.token_tenda || '',
+      p.termo_busca || '',
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+    const csv = [headers.join(','), ...linhas].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `produtos-${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast('CSV exportado', 'success');
+  };
+
+  const handleImportarCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo) return;
+
+    const leitor = new FileReader();
+    leitor.onload = async (evt) => {
+      const texto = evt.target?.result as string;
+      const linhas = texto.split('\n').filter(l => l.trim());
+      if (linhas.length < 2) {
+        toast('CSV vazio ou inválido', 'error');
+        return;
+      }
+
+      // Pular cabeçalho
+      const dados = linhas.slice(1).map(l => {
+        const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+        return {
+          nome: vals[0] || '',
+          marca: vals[1] || null,
+          unidade: vals[2] || null,
+          qtd_por_cesta: parseFloat(vals[3]) || 1,
+          estoque_atual: parseFloat(vals[4]) || 0,
+          preco_atual: parseFloat(vals[5]) || 0,
+          token_tenda: vals[6] || null,
+          termo_busca: vals[7] || null,
+        };
+      }).filter(d => d.nome);
+
+      if (dados.length === 0) {
+        toast('Nenhum produto válido no CSV', 'error');
+        return;
+      }
+
+      const supabase = createClient();
+      const { error } = await supabase.from('produtos').insert(dados);
+
+      if (error) {
+        toast('Erro ao importar: ' + error.message, 'error');
+        return;
+      }
+
+      toast(`${dados.length} produto(s) importado(s)`, 'success');
+      window.location.reload();
+    };
+    leitor.readAsText(arquivo);
+    // Limpar o input para permitir reimportar o mesmo arquivo
+    e.target.value = '';
   };
 
   return (
@@ -137,12 +245,34 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
           <span className="text-sm text-steel">Só estoque baixo (≤2)</span>
         </label>
         {isAdmin && (
-          <Button size="sm" onClick={abrirNovoProduto}>
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Novo Produto
-          </Button>
+          <>
+            <Button size="sm" onClick={abrirNovoProduto}>
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Novo Produto
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleExportarCSV}>
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Exportar CSV
+            </Button>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImportarCSV}
+              />
+              <span className="inline-flex items-center text-sm font-medium text-royal hover:text-royal/80 px-3 py-1.5 rounded-md border border-royal/30 hover:bg-royal/5">
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Importar CSV
+              </span>
+            </label>
+          </>
         )}
       </div>
 
@@ -290,7 +420,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               />
             </div>
             <div>
-              <Label htmlFor="prod-preco" required>Preço (R$)</Label>
+              <Label htmlFor="prod-preco">Preço (R$)</Label>
               <Input
                 id="prod-preco"
                 type="number"
@@ -298,9 +428,10 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 step="0.01"
                 value={novo.preco_atual}
                 onChange={setCampo('preco_atual')}
-                required
                 disabled={criando}
+                placeholder="Opcional — scraper preenche depois"
               />
+              <p className="text-xs text-steel mt-1">Deixe em branco se o scraper Tenda deve buscar o preço</p>
             </div>
             <div>
               <Label htmlFor="prod-qtd" required>Qtd/Cesta</Label>
@@ -316,7 +447,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="prod-token">Token Tenda</Label>
               <Input
@@ -338,6 +469,18 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 placeholder="Termo usado no scraper"
                 disabled={criando}
               />
+            </div>
+            <div className="flex items-end">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleBuscarToken}
+                disabled={criando || buscandoToken || !novo.termo_busca.trim()}
+                className="w-full"
+              >
+                {buscandoToken ? 'Buscando...' : 'Buscar Token'}
+              </Button>
             </div>
           </div>
           <div className="flex gap-3 pt-2">

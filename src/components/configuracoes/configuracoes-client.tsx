@@ -27,6 +27,8 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
   const [precoStaleDias, setPrecoStaleDias] = useState(config['preco_stale_dias'] || '7');
   const [showAddRegiao, setShowAddRegiao] = useState(false);
   const [newRegiao, setNewRegiao] = useState({ region_id: '', nome: '', cep_referencia: '' });
+  const [rodandoScraper, setRodandoScraper] = useState(false);
+  const [scraperResultado, setScraperResultado] = useState<string | null>(null);
   const { push: toast } = useToast();
 
   const handleSaveConfig = async (e: React.FormEvent) => {
@@ -45,6 +47,31 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
 
     setSavingConfig(false);
     toast('Configurações salvas com sucesso', 'success');
+  };
+
+  const handleExecutarScraper = async () => {
+    setRodandoScraper(true);
+    setScraperResultado(null);
+
+    try {
+      const res = await fetch('/api/scraper/run', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setScraperResultado('Erro: ' + (data.message || data.error));
+        toast('Erro ao executar scraper', 'error');
+        return;
+      }
+
+      const msg = `${ data.precosAtualizados } preço(s) atualizado(s) de ${ data.produtos_verificados } produto(s) verificado(s)`;
+      setScraperResultado(msg);
+      toast('Scraper executado com sucesso', 'success');
+    } catch (err) {
+      setScraperResultado('Erro de conexão: ' + (err instanceof Error ? err.message : 'erro'));
+      toast('Erro ao executar scraper', 'error');
+    } finally {
+      setRodandoScraper(false);
+    }
   };
 
   const handleSaveRegiao = async (e: React.FormEvent) => {
@@ -223,10 +250,20 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
                   onChange={(e) => setPrecoStaleDias(e.target.value)}
                 />
               </div>
-              <Button type="submit" disabled={savingConfig} loading={savingConfig}>
-                Salvar Configurações
-              </Button>
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" disabled={savingConfig} loading={savingConfig}>
+                  Salvar Configurações
+                </Button>
+                <Button type="button" variant="secondary" onClick={handleExecutarScraper} disabled={rodandoScraper}>
+                  {rodandoScraper ? 'Executando...' : 'Executar Scraper Agora'}
+                </Button>
+              </div>
             </form>
+            {scraperResultado && (
+              <div className={`mt-4 p-3 rounded-lg text-sm ${ scraperResultado.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700' }`}>
+                {scraperResultado}
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>

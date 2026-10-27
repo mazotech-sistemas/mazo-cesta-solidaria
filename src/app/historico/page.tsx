@@ -18,14 +18,29 @@ export default async function HistoricoPage() {
 
   const query = supabase
     .from('compras')
-    .select('*, profiles(nome)')
+    .select('*')
     .order('criado_em', { ascending: false });
 
   if (!profile?.is_admin) {
     query.eq('criado_por', user.id);
   }
 
-  const { data: compras, error } = await query;
+  const { data: comprasRaw, error } = await query;
+
+  // Buscar perfis separadamente (FK compras.criado_por → auth.users, não profiles)
+  let compras = comprasRaw;
+  if (comprasRaw && comprasRaw.length > 0) {
+    const userIds = [...new Set(comprasRaw.map(c => c.criado_por))];
+    const { data: perfis } = await supabase
+      .from('profiles')
+      .select('id, nome, is_admin')
+      .in('id', userIds);
+    const perfilMap = new Map((perfis || []).map(p => [p.id, p]));
+    compras = comprasRaw.map(c => ({
+      ...c,
+      profiles: perfilMap.get(c.criado_por) || null,
+    }));
+  }
 
   return (
     <div className="space-y-6">
