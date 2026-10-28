@@ -512,14 +512,16 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
           </div>
         </div>
 
-        <Button
-          onClick={handleSalvar}
-          disabled={saving}
-          className="w-full py-3 text-base"
-          loading={saving}
-        >
-          Salvar Compra
-        </Button>
+        {selecionadosCount > 0 && (
+          <Button
+            onClick={handleSalvar}
+            disabled={saving}
+            className="w-full py-3 text-base"
+            loading={saving}
+          >
+            Salvar Compra
+          </Button>
+        )}
       </div>
     </div>
   );
