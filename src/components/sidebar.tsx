@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import Image from 'next/image';
 import {
   DashboardIcon,
   PackageIcon,
@@ -58,12 +57,12 @@ export default function Sidebar({ user, profile, open = false, onClose }: Sideba
         <div className="flex items-start justify-between gap-2 px-5 pt-6 pb-5">
           <Link href="/dashboard" className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-[14px] bg-white/10 ring-1 ring-white/15 flex items-center justify-center flex-shrink-0">
-              <Image
+              <img
                 src="/logos/mazotech-sem-texto-white.svg"
                 alt="Mazotech Sistemas"
                 width={24}
                 height={24}
-                priority
+                className="w-full h-full"
               />
             </span>
             <span className="leading-tight">

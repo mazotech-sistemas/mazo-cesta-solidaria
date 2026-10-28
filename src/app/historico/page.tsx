@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import HistoricoClient from '@/components/historico/historico-client';
+import HistoricoClientWrapper from '@/components/historico/historico-client-wrapper';
 
 export default async function HistoricoPage() {
   const supabase = await createClient();
@@ -57,7 +57,7 @@ export default async function HistoricoPage() {
           Erro ao carregar compras: {error.message}
         </div>
       ) : (
-        <HistoricoClient
+        <HistoricoClientWrapper
           compras={compras || []}
           isAdmin={profile?.is_admin || false}
           userId={user?.id || ''}

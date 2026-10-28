@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { SearchIcon, HistoryIcon, CalendarIcon, TrendingUpIcon, LineChartIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 
-interface HistoricoClientProps {
+export interface HistoricoClientProps {
   compras: (Compra & { profiles?: Profile | null })[];
   isAdmin: boolean;
   userId: string;

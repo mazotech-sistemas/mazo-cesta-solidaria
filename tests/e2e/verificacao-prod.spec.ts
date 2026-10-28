@@ -77,6 +77,11 @@ test('estoque: coluna Acoes dentro da viewport em 375, 390, 768 e 1024', async (
     await irPara(page, '/estoque');
     await page.waitForTimeout(800);
 
+    // Rola a linha do produto para a área visível antes de medir
+    const row = page.locator('tr', { hasText: nome }).first();
+    await row.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+
     const rolagem = page.locator('table').first().locator('xpath=..');
     const overflow = await rolagem.evaluate((el) => {
       el.scrollLeft = el.scrollWidth;
@@ -94,9 +99,12 @@ test('estoque: coluna Acoes dentro da viewport em 375, 390, 768 e 1024', async (
       return {
         left: Math.round(r.left),
         right: Math.round(r.right),
+        top: Math.round(r.top),
+        bottom: Math.round(r.bottom),
         width: Math.round(r.width),
         altura: Math.round(r.height),
         viewport: window.innerWidth,
+        viewportH: window.innerHeight,
         paginaRolaHorizontal: document.documentElement.scrollWidth > window.innerWidth + 1,
         dentro: r.left >= 0 && r.right <= window.innerWidth && r.top >= 0 && r.bottom <= window.innerHeight,
         acertado: acertado ? `${acertado.tagName}${acertado.getAttribute('aria-label') ? '[' + acertado.getAttribute('aria-label') + ']' : ''}` : null,
@@ -106,8 +114,8 @@ test('estoque: coluna Acoes dentro da viewport em 375, 390, 768 e 1024', async (
 
     expect(medida, `botao de excluir ausente em ${width}px`).not.toBeNull();
     console.log(
-      `LARGURA ${width}: left=${medida!.left} right=${medida!.right} largura=${medida!.width} altura=${medida!.altura} ` +
-        `viewport=${medida!.viewport} dentro=${medida!.dentro} clicavel=${medida!.clicavel} ` +
+      `LARGURA ${width}: left=${medida!.left} right=${medida!.right} top=${medida!.top} bottom=${medida!.bottom} largura=${medida!.width} altura=${medida!.altura} ` +
+        `viewport=${medida!.viewport}x${medida!.viewportH} dentro=${medida!.dentro} clicavel=${medida!.clicavel} ` +
         `tabela=${overflow.clientWidth}/${overflow.scrollWidth} scrollLeft=${overflow.scrollLeft} ` +
         `paginaRolaHorizontal=${medida!.paginaRolaHorizontal} alvo=${medida!.acertado}`
     );
@@ -350,23 +358,23 @@ test('hidratacao: zero erro React #418 nas 4 telas em producao', async ({ page }
   const nome = `Produto E2E-${RUN}-hidra`;
   await criarProduto(page, nome);
 
-  const erros: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') erros.push(msg.text());
-  });
-  page.on('pageerror', (err) => erros.push('pageerror: ' + err.message));
-
   for (const rota of ['/historico', '/estoque', '/dashboard', '/simulador']) {
+    const erros: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') erros.push(msg.text());
+    });
+    page.on('pageerror', (err) => erros.push('pageerror: ' + err.message));
+
     await irPara(page, rota);
     await page.waitForTimeout(2500);
     await page.reload({ waitUntil: 'load' });
     await page.waitForTimeout(2500);
-  }
 
-  const hidratacao = erros.filter((e) => /418|hydrat|did not match|Minified React error/i.test(e));
-  console.log('HIDRATACAO erros de hidratacao:', JSON.stringify(hidratacao));
-  console.log('HIDRATACAO total de erros de console:', erros.length, JSON.stringify(erros.slice(0, 10)));
-  expect(hidratacao).toEqual([]);
+    const hidratacao = erros.filter((e) => /418|hydrat|did not match|Minified React error/i.test(e));
+    console.log(`HIDRATACAO ${rota}:`, JSON.stringify(hidratacao));
+    console.log(`HIDRATACAO ${rota} total:`, erros.length, JSON.stringify(erros.slice(0, 5)));
+    expect(hidratacao, `hidratacao falhou em ${rota}`).toEqual([]);
+  }
 });
 
 test('axe: WCAG 2.0/2.1 A e AA nas 8 telas autenticado', async ({ page }) => {

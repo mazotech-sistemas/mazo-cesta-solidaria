@@ -33,7 +33,7 @@ export default function AppShell({ user, profile, children }: AppShellProps) {
   }, [menuOpen]);
 
   return (
-    <div className="min-h-screen bg-ice lg:flex">
+    <div className="min-h-screen bg-ice lg:flex" suppressHydrationWarning>
       <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 h-14 px-4 bg-paper border-b border-[var(--line)]">
         <button
           type="button"
@@ -61,7 +61,7 @@ export default function AppShell({ user, profile, children }: AppShellProps) {
 
       <Sidebar user={user} profile={profile} open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0" suppressHydrationWarning>
         <div className="mx-auto w-full max-w-[1360px] px-4 py-5 sm:px-6 sm:py-7 lg:px-10 lg:py-8">
           {children}
         </div>
