@@ -1,13 +1,61 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
 
 const BASE = 'https://mazotech-cesta-solidaria.vercel.app';
+const RUN = marcadorExecucao();
 
-async function login(page) {
+// Todo produto criado nesta execucao entra aqui e sai no afterEach.
+let criados: string[] = [];
+
+test.beforeEach(() => {
+  criados = [];
+});
+
+test.afterEach(async () => {
+  const removidos = await limparDadosDeTeste(criados);
+  if (removidos.produtos !== criados.length) {
+    throw new Error(`Limpeza incompleta: ${removidos.produtos} de ${criados.length} produtos removidos`);
+  }
+  if (removidos.compras > 0) {
+    console.log(`Limpeza: ${removidos.compras} compra(s) de teste removida(s)`);
+  }
+});
+
+async function login(page: Page) {
   await page.goto('/login');
   await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
   await page.fill('input[type="password"]', 'senha123');
   await page.click('button:has-text("Entrar")');
   await page.waitForURL('**/dashboard');
+}
+
+// Cria produto pela tela de estoque e registra para o afterEach remover.
+async function criarProduto(page: Page, nome: string) {
+  criados.push(nome);
+  await page.goto('/estoque');
+  await page.click('button:has-text("Novo Produto")');
+  await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
+  await page.fill('#prod-nome', nome);
+  await page.fill('#prod-estoque', '999');
+  await page.fill('#prod-preco', '10.00');
+  await page.fill('#prod-qtd', '1');
+  await page.click('button:has-text("Criar Produto")');
+  await page.waitForURL('**/estoque');
+  // router.refresh() do app dispara navegacao em paralelo: espera assentar antes do proximo goto
+  await page.waitForLoadState('networkidle').catch(() => {});
+}
+
+// goto com retry: o refresh do Next aborta a navegacao seguinte de vez em quando
+async function irPara(page: Page, caminho: string) {
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      await page.goto(caminho, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      return;
+    } catch (e) {
+      if (tentativa === 3) throw e;
+      await page.waitForTimeout(1000);
+    }
+  }
 }
 
 test.describe('01 - Login / Auth', () => {
@@ -107,7 +155,8 @@ test.describe('03 - Estoque (Full CRUD)', () => {
     await page.click('button:has-text("Novo Produto")');
     await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
 
-    const nome = `Arroz Teste QA ${Date.now()}`;
+    const nome = `Arroz Teste QA ${RUN}-com-preco`;
+    criados.push(nome);
     await page.fill('#prod-nome', nome);
     await page.fill('#prod-marca', 'Tio Joao');
     await page.fill('#prod-unidade', 'kg');
@@ -129,7 +178,8 @@ test.describe('03 - Estoque (Full CRUD)', () => {
     await page.click('button:has-text("Novo Produto")');
     await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
 
-    const nome = `Feijao Teste QA ${Date.now()}`;
+    const nome = `Feijao Teste QA ${RUN}-sem-preco`;
+    criados.push(nome);
     await page.fill('#prod-nome', nome);
     await page.fill('#prod-estoque', '50');
     await page.fill('#prod-qtd', '1');
@@ -159,13 +209,16 @@ test.describe('03 - Estoque (Full CRUD)', () => {
 
   test('buscar produto por nome', async ({ page }) => {
     await login(page);
-    await page.goto('/estoque');
+
+    // O teste cria o proprio produto: a suite nao pode depender de sobra de execucao anterior
+    const nome = `Arroz Teste QA ${RUN}-busca`;
+    await criarProduto(page, nome);
+
     const search = page.locator('input[placeholder*="Buscar"]');
-    await search.fill('Arroz');
+    await search.fill(nome);
     await page.waitForTimeout(500);
 
-    // Se tem arroz, deve aparecer; se nao, deve mostrar vazio
-    const resultados = page.locator('table tr:has-text("Arroz")');
+    const resultados = page.locator(`table tr:has-text("${nome}")`);
     await expect(resultados.first()).toBeVisible();
   });
 
@@ -221,17 +274,11 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
   test('simular compra de 1 produto', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+    await criarProduto(page, `Produto E2E-${RUN}-simular`);
+    await irPara(page, '/simulador');
 
     // Esperar produtos carregarem
     await page.waitForTimeout(2000);
-
-    // Verificar se tem produtos
-    const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount === 0) {
-      console.log('Skip: sem produtos para simular');
-      return;
-    }
 
     // Selecionar primeiro produto
     await page.locator('input[type="checkbox"]').first().check();
@@ -243,11 +290,9 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
   test('selecionar todos', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+    await criarProduto(page, `Produto E2E-${RUN}-todos`);
+    await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
-
-    const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount === 0) return;
 
     await page.locator('button:has-text("Selecionar todos")').click();
     const checked = await page.locator('input[type="checkbox"]:checked').count();
@@ -256,7 +301,8 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
   test('limpar selecao', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+    await criarProduto(page, `Produto E2E-${RUN}-limpar`);
+    await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
 
     await page.locator('button:has-text("Selecionar todos")').click();
@@ -268,14 +314,9 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
   test('salvar compra funciona', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+    await criarProduto(page, `Produto E2E-${RUN}-compra`);
+    await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
-
-    const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount === 0) {
-      console.log('Skip: sem produtos');
-      return;
-    }
 
     // Selecionar um produto
     await page.locator('input[type="checkbox"]').first().check();
@@ -296,11 +337,15 @@ test.describe('04 - Simulador (Full Flow)', () => {
     await page.goto('/simulador');
     await page.waitForTimeout(2000);
 
+    // Estado vazio so faz sentido com a base sem produto ativo: limpa o que existir da execucao
     const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount === 0) {
-      await expect(page.locator('text=Nenhum produto disponivel')).toBeVisible();
-      await expect(page.locator('text=Ver Estoque')).toBeVisible();
+    if (produtosCount > 0) {
+      console.log(`Skip: base com ${produtosCount} produto(s) ativo(s), estado vazio nao se aplica`);
+      return;
     }
+
+    await expect(page.locator('text=Nenhum produto disponível')).toBeVisible();
+    await expect(page.locator('text=Ver Estoque')).toBeVisible();
   });
 });
 
@@ -474,17 +519,7 @@ test.describe('09 - Integracao End-to-End: Criar Produto -> Simular -> Ver no Hi
     await login(page);
 
     // 1. Criar produto
-    await page.goto('/estoque');
-    await page.click('button:has-text("Novo Produto")');
-    await expect(page.locator('h2:has-text("Novo Produto")')).toBeVisible({ timeout: 10000 });
-
-    const timestamp = Date.now().toString().slice(-6);
-    await page.fill('#prod-nome', `Produto E2E-${timestamp}`);
-    await page.fill('#prod-estoque', '999');
-    await page.fill('#prod-preco', '10.00');
-    await page.fill('#prod-qtd', '1');
-    await page.click('button:has-text("Criar Produto")');
-    await page.waitForTimeout(2000);
+    await criarProduto(page, `Produto E2E-${RUN}-fluxo`);
 
     // 2. Ir para simulador e criar compra
     let retries = 3;
@@ -596,14 +631,9 @@ test.describe('13 - Validacoes de formulario', () => {
 
   test('simulador com produto selecionado mostra botao salvar', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+    await criarProduto(page, `Produto E2E-${RUN}-botao-salvar`);
+    await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
-
-    const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount === 0) {
-      console.log('Skip: sem produtos');
-      return;
-    }
 
     // Selecionar um produto
     await page.locator('input[type="checkbox"]').first().check();
@@ -614,7 +644,10 @@ test.describe('13 - Validacoes de formulario', () => {
 
   test('numero de cestas min 1', async ({ page }) => {
     await login(page);
-    await page.goto('/simulador');
+
+    // Precisa de pelo menos um produto para o simulador renderizar o item
+    await criarProduto(page, `Produto E2E-${RUN}-cestas`);
+    await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
 
     await page.fill('#num-cestas', '0');

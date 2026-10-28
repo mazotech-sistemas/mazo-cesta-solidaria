@@ -1,6 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
 
-async function login(page) {
+const RUN = marcadorExecucao();
+let criados: string[] = [];
+
+test.beforeEach(() => {
+  criados = [];
+});
+
+test.afterEach(async () => {
+  const removidos = await limparDadosDeTeste(criados);
+  if (removidos.produtos !== criados.length) {
+    throw new Error(`Limpeza incompleta: ${removidos.produtos} de ${criados.length} produtos removidos`);
+  }
+});
+
+async function login(page: Page) {
   await page.goto('/login');
   await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
   await page.fill('input[type="password"]', 'senha123');
@@ -23,13 +38,16 @@ test.describe('Estoque - Preco Opcional', () => {
     await expect(precoInput).not.toHaveAttribute('required');
 
     // Preencher apenas campos obrigatórios (sem preço)
-    await page.fill('#prod-nome', 'Arroz Teste 5kg');
+    const nome = `Arroz Teste ${RUN}-preco-opcional`;
+    criados.push(nome);
+    await page.fill('#prod-nome', nome);
     await page.fill('#prod-estoque', '10');
     await page.fill('#prod-qtd', '1');
 
     // Submit sem preço deve funcionar (ou dar erro de rede, mas não de validação)
     await page.click('button:has-text("Criar Produto")');
-    await page.waitForTimeout(2000);
+    await page.waitForURL('**/estoque');
+    await expect(page.locator(`text=${nome}`)).toBeVisible({ timeout: 10000 });
 
     // Verificar que não há erro de "Preencha preço"
     const erroPreco = await page.locator('.badge-error:has-text("preço")').count();
