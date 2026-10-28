@@ -216,7 +216,7 @@ test.describe('04 - Simulador (Full Flow)', () => {
   test('pagina carrega e mostra lista de produtos', async ({ page }) => {
     await login(page);
     await page.goto('/simulador');
-    await expect(page.locator('text=Simulador')).toBeVisible();
+    await expect(page.locator('h1.page-title:has-text("Simulador")')).toBeVisible();
   });
 
   test('simular compra de 1 produto', async ({ page }) => {

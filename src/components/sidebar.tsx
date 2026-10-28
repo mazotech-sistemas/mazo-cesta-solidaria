@@ -41,11 +41,11 @@ export default function Sidebar({ user, profile }: SidebarProps) {
         <Link href="/dashboard" className="flex items-center gap-3 mb-6" aria-label="Cesta Solidária - Dashboard">
           <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
             <Image
-              src="/logos/mazotech-sem-texto.svg"
+              src="/logos/mazotech-sem-texto-white.svg"
               alt="Mazotech Sistemas"
               width={28}
               height={28}
-              className="flex-shrink-0 invert"
+              className="flex-shrink-0"
               priority
             />
           </div>

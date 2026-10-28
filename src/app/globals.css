@@ -192,11 +192,11 @@
   }
 
   .metric {
-    @apply text-[2.75rem] font-extrabold tracking-[-0.03em] leading-none text-current;
+    @apply text-[2.75rem] font-extrabold tracking-[-0.03em] leading-none;
   }
 
   .metric-label {
-    @apply text-[13px] font-medium text-current/70 mt-2 uppercase tracking-wide;
+    @apply text-[13px] font-medium text-white/70 mt-2 uppercase tracking-wide;
   }
 
   .table-header {

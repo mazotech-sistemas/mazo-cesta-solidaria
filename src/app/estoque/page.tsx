@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import EstoqueClient from '@/components/estoque/estoque-client';
+import { redirect } from 'next/navigation';
 
 export default async function EstoquePage() {
   const supabase = await createClient();
@@ -23,7 +23,7 @@ export default async function EstoquePage() {
     .order('nome');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="page-head">
         <div>
           <h1 className="page-title">Estoque</h1>

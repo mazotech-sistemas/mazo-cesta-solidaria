@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import UsuariosClient from '@/components/usuarios/usuarios-client';
 
@@ -6,18 +5,14 @@ export default async function UsuariosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login?redirect=/usuarios');
-  }
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', user?.id)
     .single();
 
   if (!profile?.is_admin) {
-    redirect('/dashboard');
+    return null; // Layout handles redirect
   }
 
   const { data: users } = await supabase
@@ -36,7 +31,7 @@ export default async function UsuariosPage() {
 
       <UsuariosClient
         users={users || []}
-        currentUserId={user.id}
+        currentUserId={user?.id || ''}
       />
     </div>
   );

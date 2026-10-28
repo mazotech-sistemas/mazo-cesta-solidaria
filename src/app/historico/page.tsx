@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import HistoricoClient from '@/components/historico/historico-client';
 
@@ -6,14 +5,10 @@ export default async function HistoricoPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login?redirect=/historico');
-  }
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', user?.id)
     .single();
 
   const query = supabase
@@ -22,7 +17,7 @@ export default async function HistoricoPage() {
     .order('criado_em', { ascending: false });
 
   if (!profile?.is_admin) {
-    query.eq('criado_por', user.id);
+    query.eq('criado_por', user?.id);
   }
 
   const { data: comprasRaw, error } = await query;
@@ -59,7 +54,7 @@ export default async function HistoricoPage() {
         <HistoricoClient
           compras={compras || []}
           isAdmin={profile?.is_admin || false}
-          userId={user.id}
+          userId={user?.id || ''}
         />
       )}
     </div>

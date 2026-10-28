@@ -1,14 +1,9 @@
-import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import SimuladorClient from '@/components/simulador/simulador-client';
 
 export default async function SimuladorPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/login?redirect=/simulador');
-  }
 
   const { data: produtos } = await supabase
     .from('produtos')
@@ -27,7 +22,7 @@ export default async function SimuladorPage() {
 
       <SimuladorClient
         produtos={produtos || []}
-        userId={user.id}
+        userId={user?.id || ''}
       />
     </div>
   );
