@@ -227,7 +227,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                         type="checkbox"
                         checked={checked}
                         onChange={() => handleToggle(p.id)}
-                        className="w-[18px] h-[18px] rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20 flex-shrink-0"
+                        className="w-[18px] h-[18px] rounded border-[var(--line)] text-royal flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <label htmlFor={`produto-${p.id}`} className="block cursor-pointer">

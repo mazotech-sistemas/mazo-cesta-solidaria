@@ -2,11 +2,11 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Spinner } from './spinner';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'outline';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-ghost' | 'destructive' | 'outline';
 type Size = 'default' | 'sm' | 'lg' | 'icon';
 
 const base =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[20px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[20px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
 
 const variants: Record<Variant, string> = {
   primary:
@@ -15,6 +15,7 @@ const variants: Record<Variant, string> = {
     'border-2 border-royal text-royal bg-transparent hover:bg-royal/5 active:bg-royal/10',
   ghost: 'text-steel hover:text-navy hover:bg-ice/70',
   danger: 'text-danger hover:bg-danger-soft hover:text-danger',
+  'danger-ghost': 'text-steel hover:bg-danger-soft hover:text-danger',
   destructive: 'bg-danger text-paper hover:bg-danger/90 active:bg-danger/80',
   outline:
     'border border-[var(--line)] text-navy bg-paper hover:bg-ice/50',

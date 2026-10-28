@@ -94,7 +94,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Lista de Usuários</h2>
-          <p className="text-[13px] text-steel mt-0.5 tabular-nums">
+          <p className="text-[13px] text-steel-strong mt-0.5 tabular-nums">
             {users.length} conta{users.length !== 1 ? 's' : ''} · {admins} admin{admins !== 1 ? 's' : ''}
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
               id="novo-admin"
               checked={newUser.is_admin}
               onChange={(e) => setNewUser({ ...newUser, is_admin: e.target.checked })}
-              className="w-4 h-4 rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20"
+              className="w-4 h-4 rounded border-[var(--line)] text-royal"
               disabled={creating}
             />
             <Label htmlFor="novo-admin" className="mb-0 cursor-pointer">Administrador</Label>

@@ -128,7 +128,7 @@ function LoginForm() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="w-4 h-4 text-royal border-[var(--line)] rounded focus:ring-2 focus:ring-royal/20"
+                  className="w-4 h-4 text-royal border-[var(--line)] rounded"
                 />
                 <span className="text-sm text-steel">Lembrar-me (30 dias)</span>
               </label>

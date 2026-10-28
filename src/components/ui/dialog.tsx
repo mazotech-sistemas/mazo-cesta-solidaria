@@ -37,6 +37,8 @@ const sizes: Record<string, string> = {
 
 export function Dialog({ open, onClose, title, description, children, size = 'md' }: DialogProps) {
   const overlayRef = React.useRef<HTMLDivElement>(null);
+  const titleId = React.useId();
+  const descriptionId = React.useId();
 
   React.useEffect(() => {
     if (!open) return;
@@ -62,24 +64,29 @@ export function Dialog({ open, onClose, title, description, children, size = 'md
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={description ? descriptionId : undefined}
         className={cn(
           'w-full bg-paper rounded-[20px] shadow-xl p-6 max-h-[90vh] overflow-y-auto',
           sizes[size]
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             {title && (
-              <h2 className="text-lg font-extrabold tracking-[-0.02em] text-navy">
+              <h2 id={titleId} className="text-lg font-extrabold tracking-[-0.02em] text-navy">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-sm text-steel mt-1">{description}</p>
+              <p id={descriptionId} className="text-sm text-steel mt-1">{description}</p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-steel hover:text-navy transition-colors p-1 -mr-1 rounded-lg hover:bg-ice/50"
             aria-label="Fechar"

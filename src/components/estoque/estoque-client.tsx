@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto, ProdutoUpdate } from '@/types/database';
 import { Input } from '@/components/ui/input';
-import { SearchIcon, PlusIcon, DownloadIcon, UploadIcon } from '@/components/icons';
+import { SearchIcon, PlusIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, AlertTriangleIcon } from '@/components/icons';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,26 +61,6 @@ function produtoParaFormulario(produto: Produto): NovoProduto {
     token_tenda: produto.token_tenda ?? '',
     termo_busca: produto.termo_busca ?? '',
   };
-}
-
-function EditarIcon() {
-  return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  );
-}
-
-function ExcluirIcon() {
-  return (
-    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M3 6h18" />
-      <path d="M8 6V4h8v2" />
-      <path d="M19 6l-1 14H6L5 6" />
-      <path d="M10 11v5M14 11v5" />
-    </svg>
-  );
 }
 
 function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
@@ -382,8 +362,8 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   return (
     <div className="space-y-4">
       {/* Toolbar: busca e filtro à esquerda, ações à direita */}
-      <div className="panel flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
-        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center min-w-0">
+      <div className="panel flex flex-wrap items-center gap-3 p-3">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center min-w-0 min-[1360px]:w-auto min-[1360px]:flex-1">
           <div className="relative flex-1 min-w-0">
             <SearchIcon
               size={16}
@@ -391,7 +371,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             />
             <Input
               type="text"
-              placeholder="Buscar por nome ou marca..."
+              placeholder="Buscar produto..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Buscar por nome ou marca"
@@ -404,7 +384,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               type="checkbox"
               checked={showLowStock}
               onChange={(e) => setShowLowStock(e.target.checked)}
-              className="w-4 h-4 rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20"
+              className="w-4 h-4 rounded border-[var(--line)] text-royal"
             />
             <span className="text-[13px] text-steel font-medium">Só estoque baixo (≤2)</span>
           </label>
@@ -434,6 +414,10 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             </label>
           </div>
         )}
+
+        <p className="text-[12px] text-steel tabular-nums whitespace-nowrap sm:ml-auto min-[1360px]:ml-0 min-[1360px]:border-l min-[1360px]:border-[var(--line)] min-[1360px]:pl-3">
+          Mostrando {filtered.length} de {lista.length} produto{lista.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       {/* Table */}
@@ -475,7 +459,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                     <TableHead align="right">Estoque</TableHead>
                     <TableHead align="right" className="hidden sm:table-cell">Preço Atual</TableHead>
                     <TableHead align="right" className="hidden xl:table-cell">Qtd/Cesta</TableHead>
-                    <TableHead align="right" className="hidden xl:table-cell">Última Atualização</TableHead>
+                    <TableHead align="right" className="hidden min-[1360px]:table-cell">Última Atualização</TableHead>
                     {isAdmin && (
                       <TableHead align="right" className="w-[1%] whitespace-nowrap">Ações</TableHead>
                     )}
@@ -504,13 +488,13 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                       <TableCell align="right" className="hidden xl:table-cell text-steel">
                         {p.qtd_por_cesta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell align="right" className="hidden xl:table-cell text-steel text-[13px] tabular-nums">
+                      <TableCell align="right" className="hidden min-[1360px]:table-cell text-steel text-[13px] tabular-nums">
                         {p.ultima_atualizacao_preco
                           ? new Date(p.ultima_atualizacao_preco).toLocaleDateString('pt-BR')
                           : '-'}
                       </TableCell>
                       {isAdmin && (
-                        <TableCell align="right" className="w-[1%] whitespace-nowrap">
+                        <TableCell align="right" className="w-[1%] whitespace-nowrap align-middle pr-2">
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               type="button"
@@ -521,18 +505,18 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                               aria-label={`Editar ${p.nome}`}
                               onClick={() => abrirEdicao(p)}
                             >
-                              <EditarIcon />
+                              <EditIcon size={16} />
                             </Button>
                             <Button
                               type="button"
-                              variant="danger"
+                              variant="danger-ghost"
                               size="sm"
                               className="px-2"
                               data-testid={`excluir-produto-${p.id}`}
                               aria-label={`Excluir ${p.nome}`}
                               onClick={() => abrirExclusao(p)}
                             >
-                              <ExcluirIcon />
+                              <TrashIcon size={16} />
                             </Button>
                           </div>
                         </TableCell>
@@ -544,10 +528,6 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             </div>
           )}
         </div>
-
-      <p className="text-[12px] text-steel tabular-nums">
-        Mostrando {filtered.length} de {lista.length} produto{lista.length !== 1 ? 's' : ''}
-      </p>
 
       <Dialog
         open={showNovoProduto}
@@ -623,9 +603,8 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 value={novo.preco_atual}
                 onChange={setCampo('preco_atual')}
                 disabled={criando}
-                placeholder="Opcional - scraper preenche depois"
+                placeholder="Opcional"
               />
-              <p className="text-xs text-steel mt-1">Deixe em branco se o scraper Tenda deve buscar o preço</p>
             </div>
             <div>
               <Label htmlFor="prod-qtd" required>Qtd/Cesta</Label>
@@ -641,6 +620,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               />
             </div>
           </div>
+          <p className="text-xs text-steel">Deixe o preço em branco para o scraper da Tenda buscar o valor.</p>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <Label htmlFor="prod-token">Token Tenda</Label>
@@ -649,7 +629,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 type="text"
                 value={novo.token_tenda}
                 onChange={setCampo('token_tenda')}
-                placeholder="Usado pelo scraper de preços"
+                placeholder="Opcional"
                 disabled={criando}
               />
             </div>
@@ -660,7 +640,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 type="text"
                 value={novo.termo_busca}
                 onChange={setCampo('termo_busca')}
-                placeholder="Termo usado no scraper"
+                placeholder="Ex: arroz"
                 disabled={criando}
               />
             </div>
@@ -764,6 +744,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 value={edicao.preco_atual}
                 onChange={setCampoEdicao('preco_atual')}
                 disabled={salvandoEdicao}
+                placeholder="Opcional"
               />
             </div>
             <div>
@@ -780,6 +761,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               />
             </div>
           </div>
+          <p className="text-xs text-steel">Deixe o preço em branco para o scraper da Tenda buscar o valor.</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="editar-prod-token">Token Tenda</Label>
@@ -826,18 +808,24 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
         size="sm"
       >
         {excluindo && (
-          <div className="space-y-4">
-            <p className="text-sm text-ink">
-              Tem certeza que quer excluir{' '}
-              <strong className="font-semibold text-navy">{excluindo.nome}</strong>? Ele deixa de
-              aparecer no estoque e nas cestas.
-            </p>
-            <div className="flex gap-3">
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 rounded-xl border border-danger-line bg-danger-soft px-3.5 py-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-paper text-danger">
+                <AlertTriangleIcon size={17} />
+              </span>
+              <p className="text-[13px] leading-relaxed text-ink">
+                Tem certeza que quer excluir{' '}
+                <strong className="font-semibold text-navy">{excluindo.nome}</strong>? Ele deixa de
+                aparecer no estoque e nas cestas.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-1">
               <Button
                 variant="secondary"
                 type="button"
                 onClick={() => setExcluindo(null)}
                 disabled={excluindoEmAndamento}
+                autoFocus
               >
                 Cancelar
               </Button>

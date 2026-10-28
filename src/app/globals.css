@@ -17,6 +17,9 @@
     --label: #1C355E;
     --line: rgba(2, 29, 68, 0.14);
     --radius: 20px;
+    /* Anel de foco por contexto: royal sobre papel, mint sobre navy. */
+    --focus-ring: var(--royal);
+    --focus-offset: var(--paper);
   }
 
   html {
@@ -38,12 +41,18 @@
   }
 
   *:focus-visible {
-    @apply outline-none ring-2 ring-royal ring-offset-2 ring-offset-paper;
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: var(--focus-ring);
+    --tw-ring-offset-color: var(--focus-offset);
   }
 
-  /* Sobre navy o anel de foco não pode usar offset branco. */
-  .navy-panel *:focus-visible {
-    @apply ring-offset-navy;
+  /* Royal sobre navy para em 2,84:1; mint sobre navy dá 9,58:1. O offset
+     acompanha o fundo escuro para não deixar halo branco. */
+  .navy-panel,
+  .stat-panel,
+  .card-navy {
+    --focus-ring: var(--mint);
+    --focus-offset: var(--navy);
   }
 
   /* O indicador nativo do date ocupa largura demais em telas estreitas. */
@@ -126,8 +135,8 @@
 
   .input {
     @apply w-full px-4 py-2.5 text-ink bg-paper border border-[var(--line)] rounded-xl
-           placeholder:text-steel/60
-           focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none
+           placeholder:text-steel
+           focus:border-royal focus:outline-none
            disabled:bg-ice disabled:cursor-not-allowed
            transition-colors;
   }

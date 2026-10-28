@@ -13,11 +13,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-2.5 text-ink bg-paper border rounded-xl transition-colors',
-            'placeholder:text-steel/60',
-            'focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none',
+            'placeholder:text-steel',
+            'focus:border-royal focus:outline-none',
             'disabled:bg-ice disabled:cursor-not-allowed',
             error
-              ? 'border-danger focus:border-danger focus:ring-danger/20'
+              ? 'border-danger focus:border-danger'
               : 'border-[var(--line)]',
             className
           )}

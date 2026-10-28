@@ -55,7 +55,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="page-subtitle">Visão geral do seu projeto Cesta Solidária</p>
         </div>
-        <p className="text-[12px] text-steel hidden sm:block pb-1 tabular-nums">
+        <p className="text-[12px] text-steel-strong hidden sm:block pb-1 tabular-nums">
           {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
         </p>
       </div>

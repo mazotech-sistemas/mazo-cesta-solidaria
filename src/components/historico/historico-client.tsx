@@ -122,16 +122,16 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="panel flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="panel flex flex-col gap-3 p-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center min-w-0">
-          <div className="relative sm:w-64">
+          <div className="relative sm:w-64 shrink-0">
             <SearchIcon
               size={16}
               className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-steel/70"
             />
             <Input
               type="text"
-              placeholder="Buscar por produto..."
+              placeholder="Buscar produto..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               aria-label="Buscar por produto"
@@ -145,7 +145,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                 type="date"
                 value={filterDateStart}
                 onChange={(e) => setFilterDateStart(e.target.value)}
-                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px] focus:ring-0"
+                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px]"
                 aria-label="Data inicial"
               />
             </div>
@@ -155,14 +155,14 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                 type="date"
                 value={filterDateEnd}
                 onChange={(e) => setFilterDateEnd(e.target.value)}
-                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px] focus:ring-0"
+                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px]"
                 aria-label="Data final"
               />
             </div>
           </div>
         </div>
-        <span className="text-[12.5px] text-steel tabular-nums whitespace-nowrap">
-          {filtradas.length} de {compras.length} compra{compras.length !== 1 ? 's' : ''}
+        <span className="shrink-0 text-[12.5px] text-steel tabular-nums whitespace-nowrap xl:border-l xl:border-[var(--line)] xl:pl-3">
+          Mostrando {filtradas.length} de {compras.length} compra{compras.length !== 1 ? 's' : ''}
         </span>
       </div>
 

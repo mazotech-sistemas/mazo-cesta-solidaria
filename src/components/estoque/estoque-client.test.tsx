@@ -114,7 +114,7 @@ describe('EstoqueClient', () => {
 
   it('filtra produtos por busca no nome', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
-    const input = screen.getByPlaceholderText(/buscar por nome ou marca/i);
+    const input = screen.getByLabelText(/buscar por nome ou marca/i);
     fireEvent.change(input, { target: { value: 'Arroz' } });
     expect(screen.getByText('Arroz 5kg')).toBeInTheDocument();
     expect(screen.queryByText('Feijão 1kg')).not.toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('EstoqueClient', () => {
 
   it('filtra produtos por busca na marca', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
-    const input = screen.getByPlaceholderText(/buscar por nome ou marca/i);
+    const input = screen.getByLabelText(/buscar por nome ou marca/i);
     fireEvent.change(input, { target: { value: 'Camil' } });
     expect(screen.getByText('Feijão 1kg')).toBeInTheDocument();
     expect(screen.queryByText('Arroz 5kg')).not.toBeInTheDocument();
@@ -140,7 +140,7 @@ describe('EstoqueClient', () => {
 
   it('combina busca e filtro de estoque baixo', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
-    const input = screen.getByPlaceholderText(/buscar por nome ou marca/i);
+    const input = screen.getByLabelText(/buscar por nome ou marca/i);
     const checkbox = screen.getByRole('checkbox', { name: /só estoque baixo/i });
     fireEvent.change(input, { target: { value: 'Feijão' } });
     fireEvent.click(checkbox);
@@ -162,7 +162,7 @@ describe('EstoqueClient', () => {
 
   it('exibe estado vazio quando nenhum produto corresponde', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
-    const input = screen.getByPlaceholderText(/buscar por nome ou marca/i);
+    const input = screen.getByLabelText(/buscar por nome ou marca/i);
     fireEvent.change(input, { target: { value: 'Inexistente' } });
     expect(screen.getByText('Nenhum produto encontrado')).toBeInTheDocument();
   });

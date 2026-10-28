@@ -56,7 +56,7 @@ export default function Sidebar({ user, profile, open = false, onClose }: Sideba
     >
       <div className="relative z-10 flex flex-col flex-1 min-h-0">
         <div className="flex items-start justify-between gap-2 px-5 pt-6 pb-5">
-          <Link href="/dashboard" className="flex items-center gap-3" aria-label="Cesta Solidária - Dashboard">
+          <Link href="/dashboard" className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-[14px] bg-white/10 ring-1 ring-white/15 flex items-center justify-center flex-shrink-0">
               <Image
                 src="/logos/mazotech-sem-texto-white.svg"

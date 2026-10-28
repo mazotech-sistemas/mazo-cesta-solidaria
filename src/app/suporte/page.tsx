@@ -53,7 +53,7 @@ export default function SuportePage() {
             priority
           />
           <h1 className="text-3xl font-extrabold tracking-[-0.02em] text-navy mb-1">Precisa de ajuda?</h1>
-          <p className="text-steel">Cesta Solidária - Mazotech Sistemas</p>
+          <p className="text-steel-strong">Cesta Solidária - Mazotech Sistemas</p>
         </div>
 
         {/* Contato */}
