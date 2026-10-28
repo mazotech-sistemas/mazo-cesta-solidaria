@@ -1,10 +1,27 @@
 'use client';
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import EstoqueClient from './estoque-client';
 import type { Produto } from '@/types/database';
+
+const { updateMock, eqMock } = vi.hoisted(() => ({
+  updateMock: vi.fn(),
+  eqMock: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({
+    from: () => ({
+      update: (payload: Record<string, unknown>) => {
+        updateMock(payload);
+        return { eq: eqMock };
+      },
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    }),
+  }),
+}));
 
 const mockProdutos: Produto[] = [
   {
@@ -58,6 +75,12 @@ const mockProdutos: Produto[] = [
 ];
 
 describe('EstoqueClient', () => {
+  beforeEach(() => {
+    updateMock.mockClear();
+    eqMock.mockReset();
+    eqMock.mockResolvedValue({ error: null });
+  });
+
   it('renderiza tabela com todos os produtos', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
     expect(screen.getByText('Arroz 5kg')).toBeInTheDocument();
@@ -184,5 +207,111 @@ describe('EstoqueClient', () => {
     const produtosSemData = [{ ...mockProdutos[0], ultima_atualizacao_preco: null }];
     render(<EstoqueClient produtos={produtosSemData} isAdmin={false} />);
     expect(screen.getByText('-')).toBeInTheDocument();
+  });
+
+  it('admin vê as ações de editar e excluir em cada linha', () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    expect(screen.getByTestId('editar-produto-1')).toBeInTheDocument();
+    expect(screen.getByTestId('excluir-produto-1')).toBeInTheDocument();
+    expect(screen.getByTestId('editar-produto-3')).toBeInTheDocument();
+    expect(screen.getByTestId('excluir-produto-3')).toBeInTheDocument();
+  });
+
+  it('não-admin não vê ações de editar nem excluir', () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
+    expect(screen.queryByTestId('editar-produto-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('excluir-produto-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ações')).not.toBeInTheDocument();
+  });
+
+  it('edita produto e atualiza a linha sem recarregar a página', async () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('editar-produto-1'));
+
+    const nome = screen.getByLabelText(/^Nome/) as HTMLInputElement;
+    expect(nome.value).toBe('Arroz 5kg');
+    expect((screen.getByLabelText(/^Marca/) as HTMLInputElement).value).toBe('Tio João');
+
+    fireEvent.change(nome, { target: { value: 'Arroz Integral 5kg' } });
+    fireEvent.submit(screen.getByTestId('form-editar-produto'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Arroz Integral 5kg')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Arroz 5kg')).not.toBeInTheDocument();
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ nome: 'Arroz Integral 5kg', preco_atual: 25.9 })
+    );
+    expect(eqMock).toHaveBeenCalledWith('id', 1);
+    expect(screen.getByText('Produto atualizado com sucesso')).toBeInTheDocument();
+  });
+
+  it('atualiza ultima_atualizacao_preco quando o preço muda', async () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('editar-produto-1'));
+
+    fireEvent.change(screen.getByLabelText(/Preço/), { target: { value: '30.50' } });
+    fireEvent.submit(screen.getByTestId('form-editar-produto'));
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          preco_atual: 30.5,
+          ultima_atualizacao_preco: expect.any(String),
+        })
+      );
+    });
+  });
+
+  it('não envia ultima_atualizacao_preco quando o preço não muda', async () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('editar-produto-2'));
+
+    fireEvent.submit(screen.getByTestId('form-editar-produto'));
+
+    await waitFor(() => {
+      expect(updateMock).toHaveBeenCalled();
+    });
+    const payload = updateMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('ultima_atualizacao_preco');
+  });
+
+  it('bloqueia salvar edição sem nome e mostra erro inline', async () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('editar-produto-1'));
+
+    fireEvent.change(screen.getByLabelText(/^Nome/), { target: { value: '' } });
+    fireEvent.submit(screen.getByTestId('form-editar-produto'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Preencha nome');
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('form-editar-produto')).toBeInTheDocument();
+  });
+
+  it('exclui produto com confirmação usando soft delete', async () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('excluir-produto-1'));
+
+    expect(screen.getByRole('heading', { name: 'Excluir produto' })).toBeInTheDocument();
+    expect(screen.getByText(/Tem certeza que quer excluir/)).toHaveTextContent('Arroz 5kg');
+
+    fireEvent.click(screen.getByTestId('confirmar-exclusao'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Arroz 5kg')).not.toBeInTheDocument();
+    });
+    expect(updateMock).toHaveBeenCalledWith({ ativo: false });
+    expect(eqMock).toHaveBeenCalledWith('id', 1);
+    expect(screen.getByText('Mostrando 2 de 2 produtos')).toBeInTheDocument();
+    expect(screen.getByText('Produto excluído do estoque')).toBeInTheDocument();
+  });
+
+  it('cancelar a exclusão mantém o produto na lista', () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={true} />);
+    fireEvent.click(screen.getByTestId('excluir-produto-1'));
+    fireEvent.click(screen.getByRole('button', { name: /^Cancelar$/ }));
+
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(screen.getByText('Arroz 5kg')).toBeInTheDocument();
   });
 });

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Produto } from '@/types/database';
+import { Produto, ProdutoUpdate } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { SearchIcon, PlusIcon, DownloadIcon, UploadIcon } from '@/components/icons';
 import { Label } from '@/components/ui/label';
@@ -40,7 +40,51 @@ const produtoVazio: NovoProduto = {
   termo_busca: '',
 };
 
+function validarProduto(form: NovoProduto): string | null {
+  const camposObrigatorios: Array<{ campo: keyof NovoProduto; rotulo: string }> = [
+    { campo: 'nome', rotulo: 'nome' },
+    { campo: 'qtd_por_cesta', rotulo: 'quantidade por cesta' },
+    { campo: 'estoque_atual', rotulo: 'estoque atual' },
+  ];
+  const faltando = camposObrigatorios.find(({ campo }) => !form[campo].trim());
+  return faltando ? 'Preencha ' + faltando.rotulo : null;
+}
+
+function produtoParaFormulario(produto: Produto): NovoProduto {
+  return {
+    nome: produto.nome,
+    marca: produto.marca ?? '',
+    unidade: produto.unidade ?? '',
+    qtd_por_cesta: String(produto.qtd_por_cesta),
+    estoque_atual: String(produto.estoque_atual),
+    preco_atual: String(produto.preco_atual),
+    token_tenda: produto.token_tenda ?? '',
+    termo_busca: produto.termo_busca ?? '',
+  };
+}
+
+function EditarIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function ExcluirIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v5M14 11v5" />
+    </svg>
+  );
+}
+
 function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
+  const [lista, setLista] = useState<Produto[]>(produtos);
   const [search, setSearch] = useState('');
   const [showLowStock, setShowLowStock] = useState(false);
   const [showNovoProduto, setShowNovoProduto] = useState(false);
@@ -48,10 +92,20 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   const [criando, setCriando] = useState(false);
   const [buscandoToken, setBuscandoToken] = useState(false);
   const [formError, setFormError] = useState('');
+  const [editando, setEditando] = useState<Produto | null>(null);
+  const [edicao, setEdicao] = useState<NovoProduto>(produtoVazio);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [erroEdicao, setErroEdicao] = useState('');
+  const [excluindo, setExcluindo] = useState<Produto | null>(null);
+  const [excluindoEmAndamento, setExcluindoEmAndamento] = useState(false);
 
   const { push: toast } = useToast();
 
-  const filtered = produtos
+  useEffect(() => {
+    setLista(produtos);
+  }, [produtos]);
+
+  const filtered = lista
     .filter((p) => {
       if (search && !p.nome.toLowerCase().includes(search.toLowerCase()) && !(p.marca || '').toLowerCase().includes(search.toLowerCase())) {
         return false;
@@ -71,14 +125,9 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
     e.preventDefault();
     setFormError('');
 
-    const camposObrigatorios: Array<{ campo: keyof NovoProduto; rotulo: string }> = [
-      { campo: 'nome', rotulo: 'nome' },
-      { campo: 'qtd_por_cesta', rotulo: 'quantidade por cesta' },
-      { campo: 'estoque_atual', rotulo: 'estoque atual' },
-    ];
-    const faltando = camposObrigatorios.find(({ campo }) => !novo[campo].trim());
-    if (faltando) {
-      setFormError('Preencha ' + faltando.rotulo);
+    const erro = validarProduto(novo);
+    if (erro) {
+      setFormError(erro);
       return;
     }
 
@@ -156,9 +205,111 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
     setShowNovoProduto(true);
   };
 
+  const abrirEdicao = (produto: Produto) => {
+    setEditando(produto);
+    setEdicao(produtoParaFormulario(produto));
+    setErroEdicao('');
+  };
+
+  const fecharEdicao = () => {
+    setEditando(null);
+    setErroEdicao('');
+  };
+
+  const setCampoEdicao = (campo: keyof NovoProduto) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEdicao(prev => ({ ...prev, [campo]: e.target.value }));
+  };
+
+  const handleSalvarEdicao = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editando) return;
+    setErroEdicao('');
+
+    const erro = validarProduto(edicao);
+    if (erro) {
+      setErroEdicao(erro);
+      return;
+    }
+
+    const nome = edicao.nome.trim();
+    const marca = edicao.marca.trim() || null;
+    const unidade = edicao.unidade.trim() || null;
+    const qtdPorCesta = parseFloat(edicao.qtd_por_cesta) || 1;
+    const estoqueAtual = parseFloat(edicao.estoque_atual) || 0;
+    const precoAtual = edicao.preco_atual.trim() ? parseFloat(edicao.preco_atual) : 0;
+    const tokenTenda = edicao.token_tenda.trim() || null;
+    const termoBusca = edicao.termo_busca.trim() || null;
+    const precoMudou = precoAtual !== editando.preco_atual;
+    const agora = new Date().toISOString();
+
+    const payload: ProdutoUpdate = {
+      nome,
+      marca,
+      unidade,
+      qtd_por_cesta: qtdPorCesta,
+      estoque_atual: estoqueAtual,
+      preco_atual: precoAtual,
+      token_tenda: tokenTenda,
+      termo_busca: termoBusca,
+      ...(precoMudou ? { ultima_atualizacao_preco: agora } : {}),
+    };
+
+    setSalvandoEdicao(true);
+    const supabase = createClient();
+    const { error } = await supabase.from('produtos').update(payload).eq('id', editando.id);
+
+    if (error) {
+      setErroEdicao(error.message);
+      toast('Erro ao salvar produto: ' + error.message, 'error');
+      setSalvandoEdicao(false);
+      return;
+    }
+
+    const atualizado: Produto = {
+      ...editando,
+      nome,
+      marca,
+      unidade,
+      qtd_por_cesta: qtdPorCesta,
+      estoque_atual: estoqueAtual,
+      preco_atual: precoAtual,
+      token_tenda: tokenTenda,
+      termo_busca: termoBusca,
+      ultima_atualizacao_preco: precoMudou ? agora : editando.ultima_atualizacao_preco,
+    };
+
+    setLista(prev => prev.map(p => (p.id === atualizado.id ? atualizado : p)));
+    toast('Produto atualizado com sucesso', 'success');
+    setSalvandoEdicao(false);
+    fecharEdicao();
+  };
+
+  const abrirExclusao = (produto: Produto) => {
+    setExcluindo(produto);
+  };
+
+  const handleConfirmarExclusao = async () => {
+    if (!excluindo) return;
+
+    setExcluindoEmAndamento(true);
+    const supabase = createClient();
+    const { error } = await supabase.from('produtos').update({ ativo: false }).eq('id', excluindo.id);
+
+    if (error) {
+      toast('Erro ao excluir produto: ' + error.message, 'error');
+      setExcluindoEmAndamento(false);
+      return;
+    }
+
+    setLista(prev => prev.filter(p => p.id !== excluindo.id));
+    toast('Produto excluído do estoque', 'success');
+    setExcluindoEmAndamento(false);
+    setExcluindo(null);
+  };
+
   const handleExportarCSV = () => {
     const headers = ['nome','marca','unidade','qtd_por_cesta','estoqueAtual','precoAtual','tokenTenda','termoBusca'];
-    const linhas = produtos.map(p => [
+    const linhas = lista.map(p => [
       p.nome,
       p.marca || '',
       p.unidade || '',
@@ -293,22 +444,22 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
               <h3 className="font-semibold text-navy mb-1">
-                {produtos.length === 0 ? 'Nenhum produto cadastrado' : 'Nenhum produto encontrado'}
+                {lista.length === 0 ? 'Nenhum produto cadastrado' : 'Nenhum produto encontrado'}
               </h3>
               <p className="text-steel">
-                {produtos.length === 0
+                {lista.length === 0
                   ? (isAdmin
                     ? 'Adicione seu primeiro produto para começar a gerenciar o estoque'
                     : 'Fale com o administrador para cadastrar produtos')
                   : 'Tente ajustar os filtros de busca'}
               </p>
-              {produtos.length === 0 && isAdmin && (
+              {lista.length === 0 && isAdmin && (
                 <button type="button" onClick={abrirNovoProduto} className="btn-primary mt-5">
                   <PlusIcon size={15} />
                   Novo Produto
                 </button>
               )}
-              {produtos.length > 0 && (
+              {lista.length > 0 && (
                 <button type="button" onClick={limparFiltros} className="btn-secondary mt-5">
                   Limpar filtros
                 </button>
@@ -325,6 +476,9 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                     <TableHead align="right" className="hidden sm:table-cell">Preço Atual</TableHead>
                     <TableHead align="right" className="hidden xl:table-cell">Qtd/Cesta</TableHead>
                     <TableHead align="right" className="hidden xl:table-cell">Última Atualização</TableHead>
+                    {isAdmin && (
+                      <TableHead align="right" className="w-[1%] whitespace-nowrap">Ações</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -355,6 +509,34 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                           ? new Date(p.ultima_atualizacao_preco).toLocaleDateString('pt-BR')
                           : '-'}
                       </TableCell>
+                      {isAdmin && (
+                        <TableCell align="right" className="w-[1%] whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="px-2"
+                              data-testid={`editar-produto-${p.id}`}
+                              aria-label={`Editar ${p.nome}`}
+                              onClick={() => abrirEdicao(p)}
+                            >
+                              <EditarIcon />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              className="px-2"
+                              data-testid={`excluir-produto-${p.id}`}
+                              aria-label={`Excluir ${p.nome}`}
+                              onClick={() => abrirExclusao(p)}
+                            >
+                              <ExcluirIcon />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -364,7 +546,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
         </div>
 
       <p className="text-[12px] text-steel tabular-nums">
-        Mostrando {filtered.length} de {produtos.length} produto{produtos.length !== 1 ? 's' : ''}
+        Mostrando {filtered.length} de {lista.length} produto{lista.length !== 1 ? 's' : ''}
       </p>
 
       <Dialog
@@ -509,6 +691,168 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             </Button>
           </div>
         </form>
+      </Dialog>
+
+      <Dialog
+        open={editando !== null}
+        onClose={fecharEdicao}
+        title="Editar Produto"
+        description={editando ? `Atualize os dados de ${editando.nome}` : undefined}
+        size="md"
+      >
+        <form onSubmit={handleSalvarEdicao} className="space-y-4" data-testid="form-editar-produto">
+          {erroEdicao && (
+            <div className="badge badge-error w-full justify-center" role="alert">
+              {erroEdicao}
+            </div>
+          )}
+          <div>
+            <Label htmlFor="editar-prod-nome" required>Nome</Label>
+            <Input
+              id="editar-prod-nome"
+              type="text"
+              value={edicao.nome}
+              onChange={setCampoEdicao('nome')}
+              required
+              disabled={salvandoEdicao}
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="editar-prod-marca">Marca</Label>
+              <Input
+                id="editar-prod-marca"
+                type="text"
+                value={edicao.marca}
+                onChange={setCampoEdicao('marca')}
+                disabled={salvandoEdicao}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editar-prod-unidade">Unidade</Label>
+              <Input
+                id="editar-prod-unidade"
+                type="text"
+                value={edicao.unidade}
+                onChange={setCampoEdicao('unidade')}
+                disabled={salvandoEdicao}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label htmlFor="editar-prod-estoque" required>Estoque Atual</Label>
+              <Input
+                id="editar-prod-estoque"
+                type="number"
+                min={0}
+                step="0.01"
+                value={edicao.estoque_atual}
+                onChange={setCampoEdicao('estoque_atual')}
+                required
+                disabled={salvandoEdicao}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editar-prod-preco">Preço (R$)</Label>
+              <Input
+                id="editar-prod-preco"
+                type="number"
+                min={0}
+                step="0.01"
+                value={edicao.preco_atual}
+                onChange={setCampoEdicao('preco_atual')}
+                disabled={salvandoEdicao}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editar-prod-qtd" required>Qtd/Cesta</Label>
+              <Input
+                id="editar-prod-qtd"
+                type="number"
+                min={0}
+                step="0.01"
+                value={edicao.qtd_por_cesta}
+                onChange={setCampoEdicao('qtd_por_cesta')}
+                required
+                disabled={salvandoEdicao}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="editar-prod-token">Token Tenda</Label>
+              <Input
+                id="editar-prod-token"
+                type="text"
+                value={edicao.token_tenda}
+                onChange={setCampoEdicao('token_tenda')}
+                disabled={salvandoEdicao}
+              />
+            </div>
+            <div>
+              <Label htmlFor="editar-prod-termo">Termo de Busca</Label>
+              <Input
+                id="editar-prod-termo"
+                type="text"
+                value={edicao.termo_busca}
+                onChange={setCampoEdicao('termo_busca')}
+                disabled={salvandoEdicao}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={fecharEdicao}
+              disabled={salvandoEdicao}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" loading={salvandoEdicao}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={excluindo !== null}
+        onClose={() => setExcluindo(null)}
+        title="Excluir produto"
+        description="O produto sai do estoque, mas o histórico de compras continua no banco."
+        size="sm"
+      >
+        {excluindo && (
+          <div className="space-y-4">
+            <p className="text-sm text-ink">
+              Tem certeza que quer excluir{' '}
+              <strong className="font-semibold text-navy">{excluindo.nome}</strong>? Ele deixa de
+              aparecer no estoque e nas cestas.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setExcluindo(null)}
+                disabled={excluindoEmAndamento}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                onClick={handleConfirmarExclusao}
+                loading={excluindoEmAndamento}
+                data-testid="confirmar-exclusao"
+              >
+                Excluir produto
+              </Button>
+            </div>
+          </div>
+        )}
       </Dialog>
     </div>
   );
