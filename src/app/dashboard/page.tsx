@@ -25,6 +25,8 @@ export default async function DashboardPage() {
     { data: produtosEstoqueBaixo },
     { count: precosDesatualizados },
     { count: comprasMes },
+    { data: produtosSemToken },
+    { data: configRows },
   ] = await Promise.all([
     supabase.from('produtos').select('*', { count: 'exact', head: true }).eq('ativo', true),
     supabase.from('produtos').select('id').eq('ativo', true).lte('estoque_atual', 2),
@@ -36,12 +38,19 @@ export default async function DashboardPage() {
     supabase.from('compras').select('*', { count: 'exact', head: true })
       .eq('criado_por', user.id)
       .gte('criado_em', new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0, 0).toISOString()),
+    supabase.from('produtos').select('id').eq('ativo', true).is('token_tenda', null),
+    supabase.from('config').select('chave, valor'),
   ]);
+
+  const configMap: Record<string, string> = {};
+  for (const c of configRows || []) configMap[c.chave] = c.valor;
+  const precoStaleDias = parseInt(configMap['preco_stale_dias'] || '7', 10) || 7;
 
   const stats = {
     totalProdutos: totalProdutos || 0,
     estoqueBaixo: produtosEstoqueBaixo?.length || 0,
     precosDesatualizados: precosDesatualizados || 0,
+    semToken: produtosSemToken?.length || 0,
     comprasMes: comprasMes || 0,
   };
 
@@ -70,6 +79,9 @@ export default async function DashboardPage() {
       <Alerts
         estoqueBaixo={stats.estoqueBaixo}
         precosDesatualizados={stats.precosDesatualizados}
+        semToken={stats.semToken}
+        precoStaleDias={precoStaleDias}
+        temCompras={stats.comprasMes > 0}
       />
 
       {/* Recent Purchases */}

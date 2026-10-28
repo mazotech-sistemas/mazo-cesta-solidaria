@@ -16,6 +16,17 @@ import { useToast, ToastProvider } from '@/components/ui/toast';
 interface EstoqueClientProps {
   produtos: Produto[];
   isAdmin: boolean;
+  precoStaleDias?: number;
+}
+
+type StatusPreco = 'todos' | 'automatico' | 'manual' | 'desatualizado';
+
+function precoDesatualizado(produto: Produto, dias: number): boolean {
+  if (!produto.ultima_atualizacao_preco) return true;
+  const limite = new Date();
+  limite.setDate(limite.getDate() - dias);
+  const ultimo = new Date(produto.ultima_atualizacao_preco);
+  return ultimo < limite;
 }
 
 interface NovoProduto {
@@ -63,10 +74,11 @@ function produtoParaFormulario(produto: Produto): NovoProduto {
   };
 }
 
-function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
+function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientProps) {
   const [lista, setLista] = useState<Produto[]>(produtos);
   const [search, setSearch] = useState('');
   const [showLowStock, setShowLowStock] = useState(false);
+  const [statusPreco, setStatusPreco] = useState<StatusPreco>('todos');
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [novo, setNovo] = useState<NovoProduto>(produtoVazio);
   const [criando, setCriando] = useState(false);
@@ -96,13 +108,27 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       if (showLowStock && p.estoque_atual > 2) {
         return false;
       }
+      if (statusPreco === 'automatico' && !p.token_tenda) {
+        return false;
+      }
+      if (statusPreco === 'manual' && p.token_tenda) {
+        return false;
+      }
+      if (statusPreco === 'desatualizado' && (!p.token_tenda || !precoDesatualizado(p, precoStaleDias))) {
+        return false;
+      }
       return true;
     });
 
   const limparFiltros = () => {
     setSearch('');
     setShowLowStock(false);
+    setStatusPreco('todos');
   };
+
+  const desatualizados = lista.filter(
+    (p) => p.token_tenda && precoDesatualizado(p, precoStaleDias)
+  ).length;
 
   // A coluna de ações fica presa à direita enquanto a tabela rola. O hairline
   // dela só aparece quando a tabela realmente transborda; se ela cabe inteira
@@ -324,8 +350,11 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   };
 
   const handleExportarCSV = () => {
-    const headers = ['nome','marca','unidade','qtd_por_cesta','estoqueAtual','precoAtual','tokenTenda','termoBusca'];
+    // Mesma ordem e nomes das colunas que o seed/produtos_initial.csv usa,
+    // para o arquivo exportado ser reimportável pelo próprio app.
+    const headers = ['id','nome','marca','unidade','qtd_por_cesta','estoque_atual','preco_atual','token_tenda','url_tenda','termo_busca','ativo'];
     const linhas = lista.map(p => [
+      p.id,
       p.nome,
       p.marca || '',
       p.unidade || '',
@@ -333,8 +362,10 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       p.estoque_atual,
       p.preco_atual,
       p.token_tenda || '',
+      p.url_tenda || '',
       p.termo_busca || '',
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+      p.ativo,
+    ].map((v, i) => (i === 0 || i === 10 ? String(v) : `"${String(v ?? '').replace(/"/g,'""')}"`)).join(','));
     const csv = [headers.join(','), ...linhas].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -359,18 +390,41 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
         return;
       }
 
-      // Pular cabeçalho
+      // Detecta o cabeçalho para mapear as colunas. Aceita o layout do
+      // seed (id, nome, marca, unidade, qtd_por_cesta, estoque_atual,
+      // preco_atual, token_tenda, url_tenda, termo_busca, ativo) e o layout
+      // mais enxuto de exportação (nome, marca, unidade, qtd, estoque,
+      // preco, token, termo). Id é ignorado de propósito: a sequence gera.
+      const cab = linhas[0]
+        .split(',')
+        .map((v) => v.trim().toLowerCase().replace(/^"|"$/g, ''));
+      const idx = (nome: string) => cab.indexOf(nome);
+      const col = {
+        nome: idx('nome'),
+        marca: idx('marca'),
+        unidade: idx('unidade'),
+        qtd: idx('qtd_por_cesta') >= 0 ? idx('qtd_por_cesta') : idx('qtd_por_cesta'),
+        estoque: idx('estoque_atual'),
+        preco: idx('preco_atual'),
+        token: idx('token_tenda'),
+        url: idx('url_tenda'),
+        termo: idx('termo_busca'),
+      };
+      const valor = (vals: string[], i: number) => (i >= 0 && i < vals.length ? vals[i] : '');
+
       const dados = linhas.slice(1).map(l => {
         const vals = l.split(',').map(v => v.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+        const nome = valor(vals, col.nome);
         return {
-          nome: vals[0] || '',
-          marca: vals[1] || null,
-          unidade: vals[2] || null,
-          qtd_por_cesta: parseFloat(vals[3]) || 1,
-          estoque_atual: parseFloat(vals[4]) || 0,
-          preco_atual: parseFloat(vals[5]) || 0,
-          token_tenda: vals[6] || null,
-          termo_busca: vals[7] || null,
+          nome,
+          marca: valor(vals, col.marca) || null,
+          unidade: valor(vals, col.unidade) || null,
+          qtd_por_cesta: parseFloat(valor(vals, col.qtd)) || 1,
+          estoque_atual: parseFloat(valor(vals, col.estoque)) || 0,
+          preco_atual: parseFloat(valor(vals, col.preco)) || 0,
+          token_tenda: valor(vals, col.token) || null,
+          url_tenda: valor(vals, col.url) || null,
+          termo_busca: valor(vals, col.termo) || null,
         };
       }).filter(d => d.nome);
 
@@ -380,14 +434,37 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       }
 
       const supabase = createClient();
-      const { error } = await supabase.from('produtos').insert(dados);
 
-      if (error) {
-        toast('Erro ao importar: ' + error.message, 'error');
+      // 1) Linha por linha: permite falhar sem poluir o banco e conta
+      //    novos e já existentes para a mensagem final.
+      let novos = 0;
+      let existentes = 0;
+      const erros: string[] = [];
+      for (const p of dados) {
+        const { data: jaExiste } = await supabase
+          .from('produtos')
+          .select('id')
+          .eq('nome', p.nome)
+          .limit(1);
+        if (jaExiste && jaExiste.length > 0) {
+          existentes += 1;
+          continue;
+        }
+        const { error } = await supabase.from('produtos').insert(p);
+        if (error) {
+          erros.push(`${p.nome}: ${error.message}`);
+        } else {
+          novos += 1;
+        }
+      }
+
+      if (erros.length > 0) {
+        toast(`Importação parcial: ${novos} novo(s), ${existentes} já existiam, ${erros.length} falha(s). Primeira: ${erros[0]}`, 'error');
+        window.location.reload();
         return;
       }
 
-      toast(`${dados.length} produto(s) importado(s)`, 'success');
+      toast(`${novos} produto(s) importado(s), ${existentes} já existente(s)`, 'success');
       window.location.reload();
     };
     leitor.readAsText(arquivo);
@@ -424,6 +501,21 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
             />
             <span className="text-[13px] text-steel font-medium">Só estoque baixo (≤2)</span>
           </label>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="filtro-status-preco" className="text-[13px] text-steel font-medium whitespace-nowrap">Preço</label>
+            <select
+              id="filtro-status-preco"
+              value={statusPreco}
+              onChange={(e) => setStatusPreco(e.target.value as StatusPreco)}
+              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+            >
+              <option value="todos">todos</option>
+              <option value="automatico">automático</option>
+              <option value="manual">manual</option>
+              <option value="desatualizado">desatualizado</option>
+            </select>
+          </div>
         </div>
 
         {isAdmin && (
@@ -453,6 +545,12 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
 
         <p className="text-[12px] text-steel tabular-nums whitespace-nowrap sm:ml-auto min-[1360px]:ml-0 min-[1360px]:border-l min-[1360px]:border-[var(--line)] min-[1360px]:pl-3">
           Mostrando {filtered.length} de {lista.length} produto{lista.length !== 1 ? 's' : ''}
+          {desatualizados > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 text-warn font-medium">
+              <AlertTriangleIcon size={12} />
+              {desatualizados} desatualizado{desatualizados !== 1 ? 's' : ''}
+            </span>
+          )}
         </p>
       </div>
 

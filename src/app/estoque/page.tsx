@@ -22,6 +22,11 @@ export default async function EstoquePage() {
     .eq('ativo', true)
     .order('nome');
 
+  const { data: configRows } = await supabase.from('config').select('chave, valor');
+  const configMap: Record<string, string> = {};
+  for (const c of configRows || []) configMap[c.chave] = c.valor;
+  const precoStaleDias = parseInt(configMap['preco_stale_dias'] || '7', 10) || 7;
+
   return (
     <div className="space-y-6">
       <div className="page-head">
@@ -34,6 +39,7 @@ export default async function EstoquePage() {
       <EstoqueClient
         produtos={produtos || []}
         isAdmin={profile?.is_admin || false}
+        precoStaleDias={precoStaleDias}
       />
     </div>
   );

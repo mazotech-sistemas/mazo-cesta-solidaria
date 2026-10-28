@@ -6,9 +6,18 @@ import { CheckIcon } from '@/components/icons';
 interface AlertsProps {
   estoqueBaixo: number;
   precosDesatualizados: number;
+  semToken: number;
+  precoStaleDias?: number;
+  temCompras?: boolean;
 }
 
-export default function Alerts({ estoqueBaixo, precosDesatualizados }: AlertsProps) {
+export default function Alerts({
+  estoqueBaixo,
+  precosDesatualizados,
+  semToken,
+  precoStaleDias = 7,
+  temCompras = true,
+}: AlertsProps) {
   const alerts = [];
 
   if (estoqueBaixo > 0) {
@@ -31,7 +40,7 @@ export default function Alerts({ estoqueBaixo, precosDesatualizados }: AlertsPro
 
   if (precosDesatualizados > 0) {
     alerts.push({
-      title: `${precosDesatualizados} preço${precosDesatualizados > 1 ? 's' : ''} desatualizado${precosDesatualizados > 1 ? 's' : ''} (>7 dias)`,
+      title: `${precosDesatualizados} preço${precosDesatualizados > 1 ? 's' : ''} desatualizado${precosDesatualizados > 1 ? 's' : ''} (>${precoStaleDias} dias)`,
       description: 'Execute o scraper ou atualize manualmente nas Configurações',
       href: '/configuracoes',
       variant: 'error' as const,
@@ -44,6 +53,41 @@ export default function Alerts({ estoqueBaixo, precosDesatualizados }: AlertsPro
       ),
       iconBg: 'bg-danger-soft text-danger',
       borderColor: 'border-l-[3px] border-l-danger',
+    });
+  }
+
+  if (semToken > 0) {
+    alerts.push({
+      title: `${semToken} produto${semToken > 1 ? 's' : ''} sem token Tenda`,
+      description: 'Adicione token_tenda no Estoque para automatizar preços',
+      href: '/estoque',
+      variant: 'secondary' as const,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="2" y="6" width="20" height="12" rx="2" />
+          <path d="M7 10h.01M7 14h.01M12 10h5M12 14h5" />
+        </svg>
+      ),
+      iconBg: 'bg-royal/10 text-royal',
+      borderColor: 'border-l-[3px] border-l-royal',
+    });
+  }
+
+  if (!temCompras) {
+    alerts.push({
+      title: 'Nenhuma compra registrada ainda',
+      description: 'Faça sua primeira simulação e salve no Simulador',
+      href: '/simulador',
+      variant: 'success' as const,
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+      ),
+      iconBg: 'bg-success-soft text-success',
+      borderColor: 'border-l-[3px] border-l-success',
     });
   }
 

@@ -224,6 +224,20 @@ export const EditIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const TrendingUpIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+    <polyline points="17 6 23 6 23 12" />
+  </Icon>
+);
+
+export const LineChartIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 3v18h18" />
+    <path d="M7 15l4-5 3 3 5-7" />
+  </Icon>
+);
+
 export const TrashIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M3 6h18" />

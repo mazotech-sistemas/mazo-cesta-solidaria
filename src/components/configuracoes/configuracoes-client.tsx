@@ -151,21 +151,32 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
   const handleGerarBackup = async () => {
     setGerandoBackup(true);
     try {
-      const supabase = createClient();
-      const [produtos, compras, precos, config] = await Promise.all([
-        supabase.from('produtos').select('*').order('id'),
-        supabase.from('compras').select('*').order('criado_em'),
-        supabase.from('precos_historico').select('*').order('id'),
-        supabase.from('config').select('*').order('chave'),
-      ]);
-      const tables = {
-        produtos: produtos.data ?? [],
-        compras: compras.data ?? [],
-        precos_historico: precos.data ?? [],
-        regions: regioes,
-        config: config.data ?? [],
-      };
-      const conteudo = JSON.stringify(tables, null, 2);
+      // A API faz a leitura com a sessão do usuário e já registra o backup
+      // na tabela backup_registros (migração 002). Se a rota ainda não
+      // existe no deploy antigo, caímos para a coleta local das tabelas.
+      let conteudo: string;
+      try {
+        const res = await fetch('/api/backup?baixar=1', { cache: 'no-store' });
+        if (!res.ok) throw new Error('rota indisponível');
+        conteudo = await res.text();
+      } catch {
+        const supabase = createClient();
+        const [produtos, compras, precos, config] = await Promise.all([
+          supabase.from('produtos').select('*').order('id'),
+          supabase.from('compras').select('*').order('criado_em'),
+          supabase.from('precos_historico').select('*').order('id'),
+          supabase.from('config').select('*').order('chave'),
+        ]);
+        const tables = {
+          gerado_em: new Date().toISOString(),
+          produtos: produtos.data ?? [],
+          compras: compras.data ?? [],
+          precos_historico: precos.data ?? [],
+          regions: regioes,
+          config: config.data ?? [],
+        };
+        conteudo = JSON.stringify(tables, null, 2);
+      }
       const blob = new Blob([conteudo], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -176,8 +187,9 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const parse = JSON.parse(conteudo);
       const contagens = Object.fromEntries(
-        Object.entries(tables).map(([k, v]) => [k, Array.isArray(v) ? v.length : 0])
+        Object.entries(parse).filter(([, v]) => Array.isArray(v)).map(([k, v]) => [k, (v as unknown[]).length])
       );
       toast(`Backup gerado: ${JSON.stringify(contagens)}`, 'success');
     } catch (err) {
@@ -325,11 +337,11 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
         <section className="panel overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--line)]">
             <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Backup</h3>
-            <p className="text-[12.5px] text-steel mt-0.5">Exportação das regiões em CSV e das tabelas do banco em JSON</p>
+            <p className="text-[12.5px] text-steel mt-0.5">Regiões em CSV e todas as tabelas em JSON</p>
           </div>
           <div className="flex flex-col gap-4 p-5">
             <p className="text-[13px] text-steel max-w-lg">
-              O backup JSON reúne todas as tabelas em um arquivo único para restauração. O CSV lista apenas as regiões, com uma saída mais simples para conferir.
+              O backup JSON reúne <strong className="text-navy">produtos</strong>, <strong className="text-navy">compras</strong>, <strong className="text-navy">preços históricos</strong>, <strong className="text-navy">regiões</strong> e <strong className="text-navy">configurações</strong> em um arquivo único, pronto para restauração. Cada download fica registrado na tela de Usuários.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button variant="secondary" onClick={handleGerarBackup} disabled={gerandoBackup}>

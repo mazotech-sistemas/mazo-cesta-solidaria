@@ -11,14 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { PlusIcon } from '@/components/icons';
+import { PlusIcon, DownloadIcon, UsersIcon } from '@/components/icons';
+
+interface BackupRegistro {
+  id: number;
+  criado_em: string;
+  linhas: number;
+  autor?: string | null;
+}
 
 interface UsuariosClientProps {
   users: Profile[];
   currentUserId: string;
+  backups?: BackupRegistro[];
 }
 
-export default function UsuariosClient({ users: usersIniciais, currentUserId }: UsuariosClientProps) {
+export default function UsuariosClient({ users: usersIniciais, currentUserId, backups = [] }: UsuariosClientProps) {
   const [users, setUsers] = useState<Profile[]>(usersIniciais);
   const [newUser, setNewUser] = useState({ email: '', senha: '', nome: '', is_admin: false });
   const [showModal, setShowModal] = useState(false);
@@ -166,6 +174,32 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
         </div>
       </div>
 
+      {/* Últimos backups (apenas registro visual; o backup em si é gerado em Configurações) */}
+      {backups.length > 0 && (
+        <section className="panel overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--line)]">
+            <div className="flex items-center gap-2">
+              <DownloadIcon size={16} className="text-royal" />
+              <h3 className="text-[15px] font-extrabold tracking-[-0.02em] text-navy">Últimos backups</h3>
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => (window.location.href = '/configuracoes')}>
+              Ver backups
+            </Button>
+          </div>
+          <ul className="divide-y divide-[var(--line)]">
+            {backups.slice(0, 5).map((b) => (
+              <li key={b.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[13px]">
+                <span className="text-steel tabular-nums">
+                  {new Date(b.criado_em).toLocaleString('pt-BR')}
+                </span>
+                <span className="text-navy font-medium tabular-nums">{b.linhas} linha{b.linhas !== 1 ? 's' : ''}</span>
+                {b.autor && <span className="text-steel">por {b.autor}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Modal Novo Usuário */}
       <Dialog open={showModal} onClose={() => setShowModal(false)} title="Novo Usuário" size="md">
         <form onSubmit={handleCreate} className="space-y-4">
@@ -188,8 +222,9 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
               type="password"
               value={newUser.senha}
               onChange={(e) => setNewUser({ ...newUser, senha: e.target.value })}
-              placeholder="••••••••"
+              placeholder="Mínimo 6 caracteres"
               required
+              minLength={6}
               disabled={creating}
             />
           </div>

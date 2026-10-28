@@ -20,6 +20,14 @@ export default async function UsuariosPage() {
     .select('*')
     .order('criado_em', { ascending: false });
 
+  // Últimos backups registrados (falha silenciosamente se a tabela 002
+  // ainda não foi aplicada neste projeto).
+  const { data: backups } = await supabase
+    .from('backup_registros')
+    .select('id, criado_em, linhas, autor')
+    .order('criado_em', { ascending: false })
+    .limit(5);
+
   return (
     <div className="space-y-6">
       <div className="page-head">
@@ -32,6 +40,7 @@ export default async function UsuariosPage() {
       <UsuariosClient
         users={users || []}
         currentUserId={user?.id || ''}
+        backups={backups || []}
       />
     </div>
   );
