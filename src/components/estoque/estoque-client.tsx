@@ -158,10 +158,14 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
   const sombraAcoes = acoesSobreConteudo ? ' shadow-[inset_1px_0_0_0_var(--line)]' : '';
   // Fundos opacos porque a célula presa passa por cima do conteúdo: o hover é
   // ice/40 achatado sobre paper (#F8F8F8) e o cabeçalho é ice/70 achatado (#F2F2F2).
+  // A coluna de ações fica presa à direita com `sticky right-0`. O
+  // `min-width` garante que a tabela sempre transborde em telas estreitas,
+  // que é a condição do sticky funcionar; sem ele, em viewports grandes a
+  // tabela cabe e o botão de excluir fica escondido atrás do overflow.
   const celulaAcoes =
-    'sticky right-0 z-10 w-[1%] whitespace-nowrap bg-paper pr-2 align-middle group-hover:bg-[#F8F8F8]' + sombraAcoes;
+    'sticky right-0 z-10 min-w-[96px] whitespace-nowrap bg-paper px-2 align-middle group-hover:bg-[#F8F8F8]' + sombraAcoes;
   const cabecalhoAcoes =
-    'sticky right-0 z-20 w-[1%] whitespace-nowrap bg-[#F2F2F2]' + sombraAcoes;
+    'sticky right-0 z-20 min-w-[96px] whitespace-nowrap bg-[#F2F2F2] px-2 text-right' + sombraAcoes;
 
   const handleCriarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
