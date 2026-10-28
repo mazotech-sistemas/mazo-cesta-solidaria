@@ -30,6 +30,26 @@ interface CompraExpandida extends Compra {
   }>;
 }
 
+/* Fuso fixo: sem isso o servidor (UTC) e o navegador (BRT) divergem na virada do dia. */
+const FUSO = 'America/Sao_Paulo';
+
+function formatarDia(valor: string) {
+  return new Date(valor).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: FUSO,
+  });
+}
+
+function formatarHora(valor: string) {
+  return new Date(valor).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: FUSO,
+  });
+}
+
 export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoClientProps) {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -41,6 +61,12 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
 
   const handleExpand = (id: number) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const limparFiltros = () => {
+    setFilterDateStart('');
+    setFilterDateEnd('');
+    setSearch('');
   };
 
   const handleDelete = async (id: number) => {
@@ -123,7 +149,7 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                 aria-label="Data inicial"
               />
             </div>
-            <span className="text-steel/60 text-xs">até</span>
+            <span className="text-steel-strong text-xs">até</span>
             <div className="w-[132px] sm:w-[122px]">
               <Input
                 type="date"
@@ -151,10 +177,14 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
               ? 'Ainda não há compras registradas. Vá ao Simulador para criar a primeira.'
               : 'Tente ajustar os filtros de busca.'}
           </p>
-          {compras.length === 0 && (
+          {compras.length === 0 ? (
             <Link href="/simulador" className="btn-primary">
               Ir para Simulador
             </Link>
+          ) : (
+            <button type="button" onClick={limparFiltros} className="btn-secondary">
+              Limpar filtros
+            </button>
           )}
         </div>
       ) : (
@@ -192,17 +222,10 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-steel tabular-nums sm:mt-0 sm:text-[12px]">
                         <span>
-                          {new Date(compra.criado_em).toLocaleDateString('pt-BR', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })}
+                          {formatarDia(compra.criado_em)}
                           <span className="hidden sm:inline">
                             {' '}
-                            {new Date(compra.criado_em).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            {formatarHora(compra.criado_em)}
                           </span>
                         </span>
                         <span className="whitespace-nowrap">

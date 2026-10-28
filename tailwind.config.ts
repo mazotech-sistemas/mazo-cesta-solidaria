@@ -12,6 +12,7 @@ module.exports = {
         royal: '#0052FA',
         'royal-m': '#0E5DFC',
         steel: '#4573A7',
+        'steel-strong': '#3A6491',
         ice: '#EDEDED',
         mint: '#00DEB2',
         paper: '#FFFFFF',

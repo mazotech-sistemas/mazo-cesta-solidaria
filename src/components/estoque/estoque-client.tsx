@@ -62,6 +62,11 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
       return true;
     });
 
+  const limparFiltros = () => {
+    setSearch('');
+    setShowLowStock(false);
+  };
+
   const handleCriarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -301,6 +306,11 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 <button type="button" onClick={abrirNovoProduto} className="btn-primary mt-5">
                   <PlusIcon size={15} />
                   Novo Produto
+                </button>
+              )}
+              {produtos.length > 0 && (
+                <button type="button" onClick={limparFiltros} className="btn-secondary mt-5">
+                  Limpar filtros
                 </button>
               )}
             </div>

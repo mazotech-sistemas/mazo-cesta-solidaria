@@ -152,7 +152,7 @@ function LoginForm() {
         </div>
 
         <div className="mt-4 text-center">
-          <p className="text-xs text-steel/60">Cesta Solidária v1.0 - Mazotech Sistemas</p>
+          <p className="text-xs text-steel-strong">Cesta Solidária v1.0 - Mazotech Sistemas</p>
         </div>
       </div>
     </div>

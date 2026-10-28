@@ -125,7 +125,7 @@ export default function SuportePage() {
           </Link>
         </div>
 
-        <p className="text-center text-xs text-steel/60">
+        <p className="text-center text-xs text-steel-strong">
           Cesta Solidária v1.0 - Mazotech Sistemas
         </p>
       </div>

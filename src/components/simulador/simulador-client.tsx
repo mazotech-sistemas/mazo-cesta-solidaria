@@ -223,14 +223,17 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                       className={`flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors sm:flex-nowrap sm:gap-4 sm:py-2.5 ${checked ? 'bg-royal/[0.04]' : 'hover:bg-ice/40'}`}
                     >
                       <input
+                        id={`produto-${p.id}`}
                         type="checkbox"
                         checked={checked}
                         onChange={() => handleToggle(p.id)}
                         className="w-[18px] h-[18px] rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20 flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-navy text-[14px] truncate">{p.nome}</p>
-                        {p.marca && <p className="text-[12px] text-steel truncate">{p.marca} {p.unidade ? '- ' + p.unidade : ''}</p>}
+                        <label htmlFor={`produto-${p.id}`} className="block cursor-pointer">
+                          <span className="block font-medium text-navy text-[14px] truncate">{p.nome}</span>
+                          {p.marca && <span className="block text-[12px] text-steel truncate">{p.marca} {p.unidade ? '- ' + p.unidade : ''}</span>}
+                        </label>
                       </div>
                       <div className="w-24 flex-shrink-0 text-right text-[13.5px] font-semibold text-navy tabular-nums">
                         R$ {p.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -255,7 +258,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                             </span>
                           </>
                         ) : (
-                          <span className="text-[12px] text-steel/60 whitespace-nowrap hidden sm:block">—</span>
+                          <span className="text-[12px] text-steel whitespace-nowrap hidden sm:block">—</span>
                         )}
                       </div>
                     </div>
