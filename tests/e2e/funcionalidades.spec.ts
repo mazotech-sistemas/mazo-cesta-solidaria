@@ -2,6 +2,8 @@ import { test, expect, type Page } from '@playwright/test';
 import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
 
 const RUN = marcadorExecucao();
+const ADMIN_EMAIL = process.env.CESTA_E2E_ADMIN_EMAIL || 'admin@cestasolidaria.org';
+const ADMIN_SENHA = process.env.CESTA_E2E_ADMIN_SENHA || 'senha123';
 let criados: string[] = [];
 
 test.beforeEach(() => {
@@ -17,8 +19,8 @@ test.afterEach(async () => {
 
 async function login(page: Page) {
   await page.goto('/login');
-  await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
-  await page.fill('input[type="password"]', 'senha123');
+  await page.fill('input[type="email"]', ADMIN_EMAIL);
+  await page.fill('input[type="password"]', ADMIN_SENHA);
   await page.click('button:has-text("Entrar")');
   await page.waitForURL('**/dashboard');
 }

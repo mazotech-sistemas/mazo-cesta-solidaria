@@ -39,7 +39,7 @@ No **Dashboard Vercel > Settings > Environment Variables**, adicione **todas** p
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API (service_role, **não** anon) |
 | `TENDA_BEARER_TOKEN` | `seu-token-tenda` | Tenda Atacado (API) |
-| `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` |
+| `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` (não lida pelo código hoje; a oferta de backup semanal ainda não está implementada) |
 | `CRON_SECRET` | `segredo-para-cron` | `openssl rand -hex 32` |
 
 > ⚠️ **NUNCA** commite `.env` - use só o dashboard do Vercel.
@@ -90,8 +90,8 @@ SELECT admin_criar_usuario(
 ```
 
 ### 4.5 Configurar Auth
-- **Authentication > Settings > Site URL**: `https://cesta-solidaria.vercel.app`
-- **Authentication > Settings > Redirect URLs**: `https://cesta-solidaria.vercel.app/**`
+- **Authentication > Settings > Site URL**: `https://mazotech-cesta-solidaria.vercel.app`
+- **Authentication > Settings > Redirect URLs**: `https://mazotech-cesta-solidaria.vercel.app/**`
 
 ## 5. Deploy
 
@@ -110,7 +110,7 @@ Após deploy, no **Vercel Dashboard > Functions > Cron Jobs**:
 
 Teste manual:
 ```bash
-curl -X GET "https://cesta-solidaria.vercel.app/api/scraper/tenda" \
+curl -X GET "https://mazotech-cesta-solidaria.vercel.app/api/scraper/tenda" \
   -H "Authorization: Bearer SEU_CRON_SECRET"
 ```
 Retorno esperado: JSON com `produtos_verificados`, `preços_atualizados`, `timestamp`.
@@ -129,7 +129,7 @@ Retorno esperado: JSON com `produtos_verificados`, `preços_atualizados`, `times
 |------|-------------|
 | Login funciona | `https://seu-dominio.vercel.app/login` com admin@... |
 | Dashboard carrega stats | Veja 4 cards com números |
-| Estoque lista produtos | Tabela com 27 itens |
+| Estoque lista produtos | Tabela com 26 itens |
 | Simulador calcula total | Marque itens, mude qtd, veja total |
 | Histórico mostra compras | (vá em Simulador, salve uma compra) |
 | Usuários (admin) | Crie/edite/exclua usuários |
@@ -140,11 +140,11 @@ Retorno esperado: JSON com `produtos_verificados`, `preços_atualizados`, `times
 ## 9. Comandos Úteis
 
 ```bash
-# Ver logs da edge function
-vercel logs https://cesta-solidaria.vercel.app/api/scraper/tenda
+# Ver logs da route handler do Next.js
+vercel logs https://mazotech-cesta-solidaria.vercel.app/api/scraper/tenda
 
 # Rollback
-vercel rollback https://cesta-solidaria.vercel.app
+vercel rollback https://mazotech-cesta-solidaria.vercel.app
 
 # Variáveis via CLI
 vercel env add NEXT_PUBLIC_SUPABASE_URL production

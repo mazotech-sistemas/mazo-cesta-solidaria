@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto, Json } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
 import Link from 'next/link';
-import { SearchIcon, CheckIcon, PackageIcon, BasketIcon } from '@/components/icons';
+import { SearchIcon, CheckIcon, PackageIcon, BasketIcon, DownloadIcon, AlertTriangleIcon } from '@/components/icons';
+import {
+  custoCesta,
+  cestasPossiveisEstoque,
+  cestasPossiveisOrcamento,
+  faltandoComprar,
+} from '@/lib/planner';
 
 interface ItemSelecionado {
   produto_id: number;
@@ -25,6 +30,52 @@ interface SimuladorClientProps {
   userId: string;
 }
 
+interface FaltanteParaPdf {
+  produto: {
+    nome: string;
+    unidade?: string | null;
+    estoque_atual: number;
+    qtd_por_cesta: number;
+  };
+  faltando: number;
+  custo_reposicao: number;
+}
+
+function gerarPdfListaCompras(
+  faltantes: FaltanteParaPdf[],
+  total: number,
+  dataPreco: string
+): string {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const linhas = faltantes
+    .map((f) => {
+      const nome = `${f.produto.nome} ${f.produto.unidade || ''}`.trim();
+      return `<tr><td>${esc(nome)}</td><td class="num">${f.produto.estoque_atual}</td><td class="num">${f.faltando}</td><td class="num">${f.custo_reposicao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`;
+    })
+    .join('');
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de Compras - Cesta Solidaria</title><style>
+    body { font-family: Inter, Arial, sans-serif; color: #052049; padding: 24px; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    .meta { font-size: 11px; color: #4573A7; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid rgba(2,29,68,.14); padding: 8px 10px; text-align: left; }
+    th { background: #021D44; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .total { margin-top: 12px; font-size: 14px; font-weight: 700; }
+    @media print { .no-print { display: none; } }
+  </style></head><body>
+    <h1>Lista de Compras - Cesta Solidária</h1>
+    <p class="meta">Preços atualizados em: ${esc(dataPreco)} &middot; ${faltantes.length} produto(s)</p>
+    <button class="no-print" onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#0052FA;color:#fff;border:none;border-radius:20px;font-weight:600">Imprimir / Salvar PDF</button>
+    <table>
+      <thead><tr><th>Produto</th><th class="num">Estoque</th><th class="num">Comprar</th><th class="num">Custo</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="4">Nada para comprar: estoque cobre a meta.</td></tr>'}</tbody>
+    </table>
+    <p class="total">TOTAL DA COMPRA: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+  </body></html>`;
+  return html;
+}
+
 export default function SimuladorClient({ produtos, userId }: SimuladorClientProps) {
   const [selecionados, setSelecionados] = useState<Record<number, { checked: boolean; quantidade: number }>>({});
   const [saving, setSaving] = useState(false);
@@ -32,7 +83,21 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [numeroCestas, setNumeroCestas] = useState(1);
+  const [orcamento, setOrcamento] = useState(0);
   const { push: toast } = useToast();
+
+  // === PLANNER (métricas calculadas sobre o estoque inteiro) ===
+  const custoDaCesta = useMemo(() => custoCesta(produtos), [produtos]);
+  const cestasEstoque = useMemo(() => cestasPossiveisEstoque(produtos), [produtos]);
+  const cestasOrcamento = useMemo(
+    () => cestasPossiveisOrcamento(produtos, orcamento),
+    [produtos, orcamento]
+  );
+  const faltantes = useMemo(() => faltandoComprar(produtos, numeroCestas), [produtos, numeroCestas]);
+  const totalFaltantes = useMemo(
+    () => faltantes.reduce((acc, f) => acc + f.custo_reposicao, 0),
+    [faltantes]
+  );
 
   const itensSelecionados = (() => {
     return produtos
@@ -126,9 +191,165 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
     ? produtos.filter(p => p.nome.toLowerCase().includes(termo) || (p.marca || '').toLowerCase().includes(termo))
     : produtos;
 
+  const dataPreco = new Date().toLocaleDateString('pt-BR');
+
+  const handleBaixarPdf = () => {
+    const html = gerarPdfListaCompras(faltantes, totalFaltantes, dataPreco);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lista_compras_${dataPreco.replace(/\//g, '-')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Lista de compras gerada', 'success');
+  };
+
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] xl:gap-6">
-      <div className="space-y-4 min-w-0">
+    <div className="space-y-5">
+      {/* ===== PLANNER: métricas do estoque ===== */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="panel p-4">
+          <p className="text-[11px] uppercase tracking-wider text-steel font-semibold">Custo de 1 cesta</p>
+          <p className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums mt-1">
+            R$ {custoDaCesta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+        <div className="panel p-4">
+          <p className="text-[11px] uppercase tracking-wider text-steel font-semibold">Cestas com estoque</p>
+          <p className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums mt-1">{cestasEstoque}</p>
+          <p className="text-[11px] text-steel mt-0.5">mínimo de estoque ÷ qtd por cesta</p>
+        </div>
+        <div className="panel p-4">
+          <p className="text-[11px] uppercase tracking-wider text-steel font-semibold">Cestas com orçamento</p>
+          <p className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums mt-1">
+            {orcamento > 0 ? cestasOrcamento : '—'}
+          </p>
+          <p className="text-[11px] text-steel mt-0.5">{orcamento > 0 ? `R$ ${orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} de orçamento` : 'defina o orçamento abaixo'}</p>
+        </div>
+        <div className="panel p-4">
+          <p className="text-[11px] uppercase tracking-wider text-steel font-semibold">Faltantes p/ {numeroCestas} cesta{numeroCestas > 1 ? 's' : ''}</p>
+          <p className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums mt-1">
+            {totalFaltantes > 0 ? totalFaltantes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0'}
+          </p>
+          <p className="text-[11px] text-steel mt-0.5">custo de reposição</p>
+        </div>
+      </div>
+
+      {/* ===== Parâmetros de simulação ===== */}
+      <div className="panel p-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <Label htmlFor="num-cestas">Cestas desejadas</Label>
+          <Input
+            id="num-cestas"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            aria-label="Cestas desejadas"
+            min={1}
+            max={500}
+            value={String(numeroCestas)}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              setNumeroCestas(Number.isNaN(v) ? 1 : Math.max(1, Math.min(500, v)));
+            }}
+          />
+        </div>
+        <div className="flex-1">
+          <Label htmlFor="orcamento">Orçamento disponível (R$)</Label>
+          <Input
+            id="orcamento"
+            type="text"
+            inputMode="decimal"
+            aria-label="Orçamento disponível (R$)"
+            min={0}
+            step={10}
+            value={orcamento === 0 ? '' : String(orcamento)}
+            placeholder="0"
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              setOrcamento(Number.isNaN(v) ? 0 : Math.max(0, v));
+            }}
+          />
+        </div>
+        <Button variant="secondary" onClick={handleBaixarPdf} disabled={faltantes.length === 0}>
+          <DownloadIcon size={15} />
+          Lista de compras
+        </Button>
+      </div>
+
+      {/* ===== Alertas do planner ===== */}
+      {numeroCestas > cestasEstoque && (
+        <div className="panel border-l-4 border-warn p-4 flex items-start gap-3" role="alert">
+          <span className="text-warn flex-shrink-0"><AlertTriangleIcon size={18} /></span>
+          <p className="text-[13px] text-navy">
+            Estoque cobre apenas {cestasEstoque} cesta{cestasEstoque !== 1 ? 's' : ''} das {numeroCestas} solicitadas. Compre os itens faltantes abaixo ou reduza a quantidade.
+          </p>
+        </div>
+      )}
+      {orcamento > 0 && numeroCestas > cestasOrcamento && (
+        <div className="panel border-l-4 border-warn p-4 flex items-start gap-3" role="alert">
+          <span className="text-warn flex-shrink-0"><AlertTriangleIcon size={18} /></span>
+          <p className="text-[13px] text-navy">
+            O orçamento cobre apenas {cestasOrcamento} cesta{cestasOrcamento !== 1 ? 's' : ''} das {numeroCestas} solicitadas.
+          </p>
+        </div>
+      )}
+      {faltantes.length === 0 && numeroCestas > 0 && produtos.length > 0 && (
+        <div className="panel border-l-4 border-success p-4 flex items-start gap-3" role="status">
+          <span className="text-success flex-shrink-0"><CheckIcon size={18} /></span>
+          <p className="text-[13px] text-navy">
+            Estoque completo para {numeroCestas} cesta{numeroCestas > 1 ? 's' : ''}. Nada para comprar.
+          </p>
+        </div>
+      )}
+
+      {/* ===== Lista de faltantes ===== */}
+      {faltantes.length > 0 && (
+        <div className="panel overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--line)] flex items-baseline justify-between gap-3">
+            <h3 className="text-[15px] font-extrabold tracking-[-0.02em] text-navy">O que falta comprar</h3>
+            <span className="text-[12px] text-steel tabular-nums">
+              {faltantes.length} produto{faltantes.length !== 1 ? 's' : ''} · R$ {totalFaltantes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="hidden sm:grid sm:grid-cols-[1fr_80px_80px_120px_110px] gap-x-4 px-4 py-2 bg-ice/40 border-b border-[var(--line)]">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-steel">Produto</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-steel text-right">Estoque</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-steel text-right">Comprar</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-steel text-right">Preço</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-steel text-right">Custo</span>
+          </div>
+          <div className="divide-y divide-[var(--line)]">
+            {faltantes.map((f) => (
+              <div key={f.produto.id} className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_120px_110px] gap-x-4 gap-y-1 px-4 py-3 text-[13px]">
+                <div className="min-w-0">
+                  <p className="font-medium text-navy truncate">{f.produto.nome} {f.produto.unidade ? `· ${f.produto.unidade}` : ''}</p>
+                </div>
+                <span className="tabular-nums text-steel sm:text-right">{f.produto.estoque_atual}</span>
+                <span className="tabular-nums text-navy font-semibold sm:text-right">{f.faltando}</span>
+                <span className="tabular-nums text-steel sm:text-right">R$ {f.produto.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                <span className="tabular-nums text-navy font-medium sm:text-right">R$ {f.custo_reposicao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Seleção de produtos para a cesta (fluxo original) ===== */}
+      <div className="panel p-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h3 className="text-[15px] font-extrabold tracking-[-0.02em] text-navy">Montar cesta com produtos específicos</h3>
+          <div className="flex items-center gap-2">
+            {selecionadosCount > 0 && (
+              <Badge variant="primary">{selecionadosCount} selecionado{selecionadosCount !== 1 ? 's' : ''}</Badge>
+            )}
+            <Badge variant="secondary">{produtos.length} disponível{produtos.length !== 1 ? 'es' : ''}</Badge>
+          </div>
+        </div>
+
         <div className="panel flex flex-col gap-3 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative min-w-0 sm:w-72 sm:flex-none">
@@ -154,27 +375,16 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
               </Button>
             </div>
           </div>
-
-          <div className="flex items-baseline justify-between gap-3 border-t border-[var(--line)] pt-2.5">
-            <span className="text-[12.5px] text-steel tabular-nums">
-              {produtos.length} produto{produtos.length !== 1 ? 's' : ''} disponível{produtos.length !== 1 ? 'is' : ''}
-            </span>
-            {selecionadosCount > 0 && (
-              <Badge variant="primary">
-                {selecionadosCount} selecionado{selecionadosCount !== 1 ? 's' : ''}
-              </Badge>
-            )}
-          </div>
         </div>
 
         {error && (
-          <div className="badge badge-error w-full justify-center py-2" role="alert">
+          <div className="badge badge-error w-full justify-center py-2 mt-3" role="alert">
             {error}
           </div>
         )}
 
         {saved && (
-          <div className="panel flex items-center gap-3 border-success-line bg-success-soft px-4 py-3" role="alert">
+          <div className="panel flex items-center gap-3 border-success-line bg-success-soft px-4 py-3 mt-3" role="alert">
             <span className="text-success flex-shrink-0">
               <CheckIcon size={20} />
             </span>
@@ -187,7 +397,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
           </div>
         )}
 
-        <div className="panel overflow-hidden">
+        <div className="mt-4 overflow-hidden">
           {produtos.length === 0 ? (
             <div className="px-6 py-14 text-center">
               <span className="inline-flex w-12 h-12 rounded-[14px] bg-royal/10 text-royal items-center justify-center mb-4">
@@ -210,7 +420,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
               <div className="divide-y divide-[var(--line)]">
                 {produtosVisiveis.length === 0 ? (
                   <div className="px-6 py-10 text-center text-sm text-steel">
-                    Nenhum produto encontrado para “{search}”.
+                    Nenhum produto encontrado para "{search}".
                   </div>
                 ) : produtosVisiveis.map((p) => {
                   const sel = selecionados[p.id];
@@ -270,77 +480,46 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
         </div>
       </div>
 
-      <div className="min-w-0">
-        <div className="panel p-5 lg:sticky lg:top-6 space-y-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Resumo</h2>
-            <span className="text-[12px] text-steel tabular-nums">
-              {itensSelecionados.length} item{itensSelecionados.length !== 1 ? 's' : ''}
-            </span>
+      {/* ===== Resumo ===== */}
+      <div className="panel p-5 space-y-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Resumo</h2>
+          <span className="text-[12px] text-steel tabular-nums">
+            {itensSelecionados.length} item{itensSelecionados.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        <div className="border-t border-[var(--line)] pt-4 space-y-2">
+          <div className="flex justify-between text-[13px]">
+            <span className="text-steel">Itens</span>
+            <span className="text-navy tabular-nums">{itensSelecionados.length}</span>
           </div>
-
-          <div>
-            <Label htmlFor="num-cestas">Número de cestas</Label>
-            <Input
-              id="num-cestas"
-              type="number"
-              min={1}
-              max={100}
-              value={numeroCestas}
-              onChange={(e) => setNumeroCestas(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-            />
+          <div className="flex justify-between text-[13px]">
+            <span className="text-steel">Cestas</span>
+            <span className="text-navy tabular-nums">{numeroCestas}</span>
           </div>
-
-          {itensSelecionados.length > 0 ? (
-            <>
-              <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin -mx-1 px-1">
-                {itensSelecionados.map(item => (
-                  <div key={item.produto_id} className="flex justify-between gap-2 text-[13px]">
-                    <span className="text-steel truncate flex-1">
-                      {item.nome} ({item.quantidade}x)
-                    </span>
-                    <span className="font-medium text-navy tabular-nums flex-shrink-0">
-                      R$ {(item.preco * item.quantidade * numeroCestas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t border-[var(--line)] pt-4 space-y-2">
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-steel">Itens</span>
-                  <span className="text-navy tabular-nums">{itensSelecionados.length}</span>
-                </div>
-                <div className="flex justify-between text-[13px]">
-                  <span className="text-steel">Cestas</span>
-                  <span className="text-navy tabular-nums">{numeroCestas}</span>
-                </div>
-                <div className="flex items-baseline justify-between pt-3 mt-1 border-t border-[var(--line)]">
-                  <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-steel">Total</span>
-                  <span className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums">
-                    R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                onClick={handleSalvar}
-                disabled={saving}
-                className="w-full py-3 text-base"
-                loading={saving}
-              >
-                Salvar Compra
-              </Button>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <span className="inline-flex w-11 h-11 rounded-[13px] bg-ice text-steel/70 items-center justify-center mb-3">
-                <BasketIcon size={20} />
-              </span>
-              <p className="text-steel text-[13px]">Selecione produtos para ver o resumo</p>
+          {faltantes.length > 0 && (
+            <div className="flex justify-between text-[13px]">
+              <span className="text-steel">Faltantes p/ estoque</span>
+              <span className="text-warn tabular-nums font-medium">R$ {totalFaltantes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
           )}
+          <div className="flex items-baseline justify-between pt-3 mt-1 border-t border-[var(--line)]">
+            <span className="text-[13px] font-semibold uppercase tracking-[0.08em] text-steel">Total da cesta</span>
+            <span className="text-[26px] font-extrabold tracking-[-0.03em] text-navy tabular-nums">
+              R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         </div>
+
+        <Button
+          onClick={handleSalvar}
+          disabled={saving}
+          className="w-full py-3 text-base"
+          loading={saving}
+        >
+          Salvar Compra
+        </Button>
       </div>
     </div>
   );

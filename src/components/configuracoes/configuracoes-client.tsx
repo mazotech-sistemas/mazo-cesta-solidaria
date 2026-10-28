@@ -147,6 +147,46 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
     toast('CSV exportado', 'success');
   };
 
+  const [gerandoBackup, setGerandoBackup] = useState(false);
+  const handleGerarBackup = async () => {
+    setGerandoBackup(true);
+    try {
+      const supabase = createClient();
+      const [produtos, compras, precos, config] = await Promise.all([
+        supabase.from('produtos').select('*').order('id'),
+        supabase.from('compras').select('*').order('criado_em'),
+        supabase.from('precos_historico').select('*').order('id'),
+        supabase.from('config').select('*').order('chave'),
+      ]);
+      const tables = {
+        produtos: produtos.data ?? [],
+        compras: compras.data ?? [],
+        precos_historico: precos.data ?? [],
+        regions: regioes,
+        config: config.data ?? [],
+      };
+      const conteudo = JSON.stringify(tables, null, 2);
+      const blob = new Blob([conteudo], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      link.download = `backup_cesta_solidaria_${ts}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const contagens = Object.fromEntries(
+        Object.entries(tables).map(([k, v]) => [k, Array.isArray(v) ? v.length : 0])
+      );
+      toast(`Backup gerado: ${JSON.stringify(contagens)}`, 'success');
+    } catch (err) {
+      toast('Erro ao gerar backup: ' + (err instanceof Error ? err.message : String(err)), 'error');
+    } finally {
+      setGerandoBackup(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       {precosDesatualizados > 0 && (
@@ -285,17 +325,21 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
         <section className="panel overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--line)]">
             <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Backup</h3>
-            <p className="text-[12.5px] text-steel mt-0.5">Exportação das regiões em CSV</p>
+            <p className="text-[12.5px] text-steel mt-0.5">Exportação das regiões em CSV e das tabelas do banco em JSON</p>
           </div>
-          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 p-5">
             <p className="text-[13px] text-steel max-w-lg">
-              Gera um arquivo com todas as regiões cadastradas, incluindo as inativas. Guarde fora do sistema
-              como cópia de segurança.
+              O backup JSON reúne todas as tabelas em um arquivo único para restauração. O CSV lista apenas as regiões, com uma saída mais simples para conferir.
             </p>
-            <Button variant="secondary" onClick={handleExportCSV} className="self-start sm:self-auto">
-              <DownloadIcon size={15} />
-              Exportar Regiões CSV
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button variant="secondary" onClick={handleGerarBackup} disabled={gerandoBackup}>
+                {gerandoBackup ? 'Gerando…' : 'Gerar Backup (JSON)'}
+              </Button>
+              <Button variant="secondary" onClick={handleExportCSV}>
+                <DownloadIcon size={15} />
+                Exportar Regiões CSV
+              </Button>
+            </div>
           </div>
         </section>
       </div>

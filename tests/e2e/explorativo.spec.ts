@@ -3,6 +3,8 @@ import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
 
 const BASE = 'https://mazotech-cesta-solidaria.vercel.app';
 const RUN = marcadorExecucao();
+const ADMIN_EMAIL = process.env.CESTA_E2E_ADMIN_EMAIL || 'admin@cestasolidaria.org';
+const ADMIN_SENHA = process.env.CESTA_E2E_ADMIN_SENHA || 'senha123';
 
 // Todo produto criado nesta execucao entra aqui e sai no afterEach.
 let criados: string[] = [];
@@ -23,8 +25,8 @@ test.afterEach(async () => {
 
 async function login(page: Page) {
   await page.goto('/login');
-  await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
-  await page.fill('input[type="password"]', 'senha123');
+  await page.fill('input[type="email"]', ADMIN_EMAIL);
+  await page.fill('input[type="password"]', ADMIN_SENHA);
   await page.click('button:has-text("Entrar")');
   await page.waitForURL('**/dashboard');
 }
@@ -76,14 +78,14 @@ test.describe('01 - Login / Auth', () => {
 
   test('login com email vazio', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="password"]', 'senha123');
+    await page.fill('input[type="password"]', ADMIN_SENHA);
     await page.click('button:has-text("Entrar")');
     await expect(page.locator('text=Preencha email e senha')).toBeVisible();
   });
 
   test('login com senha vazia', async ({ page }) => {
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
     await page.click('button:has-text("Entrar")');
     await expect(page.locator('text=Preencha email e senha')).toBeVisible();
   });
@@ -91,7 +93,7 @@ test.describe('01 - Login / Auth', () => {
   test('login com email sem @', async ({ page }) => {
     await page.goto('/login');
     await page.fill('input[type="email"]', 'sem-arroba');
-    await page.fill('input[type="password"]', 'senha123');
+    await page.fill('input[type="password"]', ADMIN_SENHA);
     await page.click('button:has-text("Entrar")');
     await expect(page.locator('text=Email inválido')).toBeVisible();
   });
@@ -103,8 +105,8 @@ test.describe('01 - Login / Auth', () => {
 
   test('login com redirect param funciona', async ({ page }) => {
     await page.goto('/login?redirect=/estoque');
-    await page.fill('input[type="email"]', 'admin@cestasolidaria.org');
-    await page.fill('input[type="password"]', 'senha123');
+    await page.fill('input[type="email"]', ADMIN_EMAIL);
+    await page.fill('input[type="password"]', ADMIN_SENHA);
     await page.click('button:has-text("Entrar")');
     await expect(page.url()).toContain('/estoque');
   });

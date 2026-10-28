@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const EMAIL_ADMIN = 'admin@cestasolidaria.org';
-const SENHA_ADMIN = 'senha123';
+const EMAIL_ADMIN = process.env.CESTA_E2E_ADMIN_EMAIL || 'admin@cestasolidaria.org';
+const SENHA_ADMIN = process.env.CESTA_E2E_ADMIN_SENHA || 'senha123';
 
 function lerArquivoEnv(nome: string): Record<string, string> {
   const caminho = path.resolve(process.cwd(), nome);
