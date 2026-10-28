@@ -13,7 +13,7 @@
     --paper: #FFFFFF;
     --ink: #052049;
     --label: #1C355E;
-    --line: rgba(2,29,68,.14);
+    --line: rgba(2, 29, 68, 0.14);
     --radius: 20px;
   }
 
@@ -38,21 +38,33 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-royal ring-offset-2 ring-offset-paper;
   }
+
+  /* Sobre navy o anel de foco não pode usar offset branco. */
+  .navy-panel *:focus-visible {
+    @apply ring-offset-navy;
+  }
+
+  /* O indicador nativo do date ocupa largura demais em telas estreitas. */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    padding: 0;
+    margin-left: 0.15rem;
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-paper bg-royal rounded-[20px]
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-paper bg-royal rounded-[20px]
            hover:bg-royal/90 active:bg-royal/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold text-royal bg-transparent border-2 border-royal rounded-[20px]
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold text-royal bg-transparent border-2 border-royal rounded-[20px]
            hover:bg-royal/5 active:bg-royal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-steel hover:text-navy hover:bg-ice/50 rounded-xl
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-steel hover:text-navy hover:bg-ice/70 rounded-[20px]
            transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
@@ -68,39 +80,51 @@
     background-size: 40px 40px;
   }
 
+  /* Superfície única de conteúdo: branca, com aresta visível. */
   .card {
-    @apply bg-paper border-[var(--line)] rounded-[20px] shadow-sm;
+    @apply bg-paper border border-[var(--line)] rounded-[20px] shadow-[0_1px_2px_rgba(2,29,68,0.04)];
   }
 
   .card-elevated {
-    @apply bg-paper border-[var(--line)] rounded-[20px] shadow-[0_1px_3px_rgba(2,29,68,0.08)];
+    @apply bg-paper border border-[var(--line)] rounded-[20px] shadow-[0_2px_10px_rgba(2,29,68,0.07)];
   }
 
-  .surface {
-    @apply bg-ice/60 border border-[var(--line)] rounded-[20px];
-  }
-
-  .surface-strong {
+  .panel {
     @apply bg-paper border border-[var(--line)] rounded-[20px];
   }
 
-  .stat-card {
-    @apply bg-navy text-paper rounded-[20px] p-6 relative overflow-hidden;
+  /* Bloco de métricas navy: âncora visual do topo de cada tela. */
+  .stat-panel {
+    @apply bg-navy text-paper rounded-[20px] relative overflow-hidden;
   }
 
-  .stat-card::after {
+  .stat-panel::after {
     content: '';
-    @apply absolute -right-8 -top-8 w-32 h-32 rounded-full opacity-[0.06] pointer-events-none;
-    background: radial-gradient(circle, white 0%, transparent 70%);
+    @apply absolute -right-16 -top-20 w-64 h-64 rounded-full pointer-events-none;
+    background: radial-gradient(circle, rgba(0, 210, 255, 0.16) 0%, transparent 68%);
+  }
+
+  /* Célula de métrica dentro do painel navy. */
+  .stat-card {
+    @apply relative flex flex-col justify-between gap-3 min-h-[84px] lg:min-h-0 py-1
+           transition-transform duration-150 group-hover:-translate-y-0.5;
+  }
+
+  .stat-value {
+    @apply text-[2.25rem] lg:text-[2.5rem] font-extrabold tracking-[-0.03em] leading-none tabular-nums;
+  }
+
+  .stat-label {
+    @apply text-[10.5px] lg:text-[11px] font-semibold uppercase tracking-[0.06em] lg:tracking-[0.12em] text-white/65 leading-tight;
   }
 
   .card-navy {
-    @apply bg-navy text-paper border-none rounded-[20px] shadow-lg;
+    @apply bg-navy text-paper border border-navy rounded-[20px];
   }
 
   .input {
-    @apply w-full px-4 py-2.5 text-ink bg-paper border-[var(--line)] rounded-xl
-           placeholder:text-steel/50
+    @apply w-full px-4 py-2.5 text-ink bg-paper border border-[var(--line)] rounded-xl
+           placeholder:text-steel/60
            focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none
            disabled:bg-ice disabled:cursor-not-allowed
            transition-colors;
@@ -111,7 +135,7 @@
   }
 
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap;
   }
 
   .badge-primary {
@@ -123,68 +147,46 @@
   }
 
   .badge-success {
-    @apply bg-mint/20 text-mint;
+    @apply bg-success-soft text-success;
   }
 
   .badge-warning {
-    @apply bg-amber-100 text-amber-800;
+    @apply bg-warn-soft text-warn;
   }
 
   .badge-error {
-    @apply bg-red-100 text-red-800;
-  }
-
-  .stat-card {
-    @apply card p-5 flex items-start gap-4 transition-shadow hover:shadow-md;
-  }
-
-  .stat-card-navy {
-    @apply card-navy p-5 flex items-start gap-4;
-  }
-
-  .stat-icon {
-    @apply w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0;
-  }
-
-  .stat-icon-royal {
-    @apply bg-royal/10 text-royal;
-  }
-
-  .stat-icon-mint {
-    @apply bg-mint/10 text-mint;
-  }
-
-  .stat-icon-navy {
-    @apply bg-paper/10 text-paper;
-  }
-
-  .stat-value {
-    @apply text-3xl font-extrabold tracking-[-0.02em] leading-tight;
-  }
-
-  .stat-label {
-    @apply text-sm text-steel mt-1;
+    @apply bg-danger-soft text-danger;
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-steel/80 rounded-[12px]
-           hover:bg-white/5 hover:text-paper transition-colors duration-150;
+    @apply relative flex items-center gap-3 w-full pl-3 pr-3 py-2.5 text-sm font-medium text-paper/75 rounded-xl
+           hover:bg-white/[0.07] hover:text-paper transition-colors duration-150;
   }
 
+  /* Barra à esquerda em elemento absoluto: o texto não desloca ao ativar. */
   .sidebar-link-active {
-    @apply bg-white/10 text-paper font-semibold border-l-2 border-mint;
+    @apply bg-white/10 text-paper font-semibold;
+  }
+
+  .sidebar-link-active::before {
+    content: '';
+    @apply absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full bg-mint;
   }
 
   .page-head {
-    @apply flex items-start justify-between gap-4 pb-6 border-b border-[var(--line)] mb-8;
+    @apply flex flex-wrap items-end justify-between gap-4 pb-5 border-b border-[var(--line)];
   }
 
   .page-title {
-    @apply text-[2rem] font-extrabold tracking-[-0.03em] text-navy leading-[1.1];
+    @apply text-[1.75rem] sm:text-[2rem] font-extrabold tracking-[-0.03em] text-navy leading-[1.1];
   }
 
   .page-subtitle {
     @apply text-steel mt-1.5 text-[15px] leading-relaxed;
+  }
+
+  .section-title {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-steel;
   }
 
   .navy-badge {
@@ -192,22 +194,19 @@
   }
 
   .metric {
-    @apply text-[2.75rem] font-extrabold tracking-[-0.03em] leading-none;
+    @apply text-[2.75rem] font-extrabold tracking-[-0.03em] leading-none tabular-nums;
   }
 
   .metric-label {
-    @apply text-[13px] font-medium text-white/70 mt-2 uppercase tracking-wide;
+    @apply text-[12px] font-semibold text-white/60 mt-2 uppercase tracking-[0.12em];
   }
 
-  .table-header {
-    @apply bg-navy text-paper text-sm font-semibold px-4 py-3;
+  /* Cabeçalho de tabela: claro, discreto, sem competir com o dado. */
+  .th {
+    @apply px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-label whitespace-nowrap;
   }
 
-  .table-row {
-    @apply border-b border-[var(--line)] hover:bg-ice/50 transition-colors;
-  }
-
-  .table-cell {
+  .td {
     @apply px-4 py-3 text-sm text-ink;
   }
 }

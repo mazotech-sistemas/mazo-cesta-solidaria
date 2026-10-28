@@ -21,7 +21,7 @@ export default async function UsuariosPage() {
     .order('criado_em', { ascending: false });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="page-head">
         <div>
           <h1 className="page-title">Usuários</h1>

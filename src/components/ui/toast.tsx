@@ -18,10 +18,10 @@ interface ToastContextValue {
 const ToastContext = React.createContext<ToastContextValue | null>(null);
 
 const variants: Record<ToastVariant, string> = {
-  success: 'bg-mint/10 text-mint border-mint/30',
-  error: 'bg-red-100 text-red-800 border-red-300',
-  warning: 'bg-amber-100 text-amber-800 border-amber-300',
-  info: 'bg-royal/10 text-royal border-royal/30',
+  success: 'bg-success-soft text-success border-success-line',
+  error: 'bg-danger-soft text-danger border-danger-line',
+  warning: 'bg-warn-soft text-warn border-warn-line',
+  info: 'bg-royal/5 text-royal border-royal/25',
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -6,9 +6,9 @@ type Variant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'outl
 const variants: Record<Variant, string> = {
   primary: 'bg-navy text-paper',
   secondary: 'bg-royal/10 text-royal',
-  success: 'bg-mint/20 text-mint',
-  warning: 'bg-amber-100 text-amber-800',
-  error: 'bg-red-100 text-red-800',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warn-soft text-warn',
+  error: 'bg-danger-soft text-danger',
   outline: 'border border-[var(--line)] text-steel bg-paper',
 };
 

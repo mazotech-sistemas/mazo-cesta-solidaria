@@ -84,8 +84,8 @@ describe('EstoqueClient', () => {
 
   it('mostra estoque em vermelho quando ≤ 2', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
-    const redStock = screen.getByText('1,00', { selector: 'span.text-red-700' });
-    expect(redStock).toHaveClass('text-red-700');
+    const redStock = screen.getByText('1,00', { selector: 'span.text-danger' });
+    expect(redStock).toHaveClass('text-danger');
     expect(redStock).toHaveClass('font-bold');
   });
 

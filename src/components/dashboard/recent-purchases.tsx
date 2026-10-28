@@ -2,10 +2,10 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { BasketIcon } from '@/components/icons';
 
 interface Purchase {
   id: number;
@@ -43,18 +43,18 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
   if (loading) {
     return (
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Últimas Compras</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="section-title">Últimas Compras</h2>
         </div>
-        <div className="surface surface-strong p-6 space-y-4">
+        <div className="panel p-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-4 animate-pulse">
-              <div className="w-12 h-12 rounded-xl bg-ice" />
+            <div key={i} className="flex items-center gap-4 px-3 py-4 animate-pulse">
+              <div className="w-9 h-9 rounded-[11px] bg-ice" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 bg-ice rounded" />
-                <div className="h-3 w-1/2 bg-ice rounded" />
+                <div className="h-3.5 w-40 bg-ice rounded" />
+                <div className="h-3 w-24 bg-ice rounded" />
               </div>
-              <div className="w-24 h-8 bg-ice rounded" />
+              <div className="w-20 h-5 bg-ice rounded" />
             </div>
           ))}
         </div>
@@ -65,15 +65,15 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
   if (purchases.length === 0) {
     return (
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Últimas Compras</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="section-title">Últimas Compras</h2>
         </div>
-        <div className="surface surface-strong p-12 text-center">
-          <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-          <h3 className="font-semibold text-navy mb-1 text-[17px]">Nenhuma compra registrada</h3>
-          <p className="text-steel mb-6">Faça sua primeira simulação e salve no Simulador</p>
+        <div className="panel px-6 py-12 text-center">
+          <span className="inline-flex w-12 h-12 rounded-[14px] bg-royal/10 text-royal items-center justify-center mb-4">
+            <BasketIcon size={22} />
+          </span>
+          <h3 className="font-semibold text-navy mb-1 text-[16px]">Nenhuma compra registrada</h3>
+          <p className="text-steel text-sm mb-5">Faça sua primeira simulação e salve no Simulador</p>
           <Link href="/simulador">
             <Button>Ir para Simulador</Button>
           </Link>
@@ -84,32 +84,44 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Últimas Compras</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="section-title">Últimas Compras</h2>
+        <Link
+          href="/historico"
+          className="text-[12.5px] font-semibold text-royal hover:text-royal/80 transition-colors"
+        >
+          Ver histórico
+        </Link>
       </div>
-      <div className="surface surface-strong overflow-hidden">
-        <div className="divide-y divide-[var(--line)]">
+
+      <div className="panel overflow-hidden">
+        <ul className="divide-y divide-[var(--line)]">
           {purchases.map((purchase) => (
-            <div key={purchase.id} className="p-5 hover:bg-ice/50 transition-colors flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-royal/10 text-royal flex items-center justify-center flex-shrink-0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-navy text-[15px]">{purchase.numero_cestas} cesta{purchase.numero_cestas > 1 ? 's' : ''}</p>
-                  <p className="text-sm text-steel mt-0.5">
-                    {new Date(purchase.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-extrabold text-navy text-[18px]">R$ {purchase.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-              </div>
-            </div>
+            <li key={purchase.id} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-ice/40 transition-colors">
+              <span className="hidden sm:flex w-9 h-9 rounded-[11px] bg-royal/10 text-royal items-center justify-center flex-shrink-0">
+                <BasketIcon size={17} />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[13.5px] font-medium text-ink tabular-nums">
+                  {new Date(purchase.criado_em).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                  })}
+                  <span className="text-steel ml-2 font-normal">
+                    {new Date(purchase.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </span>
+              </span>
+              <Badge variant="secondary">
+                {purchase.numero_cestas} cesta{purchase.numero_cestas > 1 ? 's' : ''}
+              </Badge>
+              <span className="w-24 sm:w-32 text-right text-[15px] font-extrabold text-navy tabular-nums">
+                R$ {purchase.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

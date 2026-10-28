@@ -7,10 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
+import { PlusIcon, DownloadIcon, AlertTriangleIcon } from '@/components/icons';
 
 interface ConfiguracoesClientProps {
   regioes: Regiao[];
@@ -148,87 +148,94 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {precosDesatualizados > 0 && (
-        <Card className="border-l-4 border-amber-500">
-          <CardContent className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-                <path d="M12 9v4" />
-                <path d="M12 17h.01" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-navy">
-                {precosDesatualizados} preço{precosDesatualizados > 1 ? 's' : ''} desatualizado{precosDesatualizados > 1 ? 's' : ''}
-              </h3>
-              <p className="text-steel text-sm mt-1">
-                Há mais de {precoStaleDias} dias sem atualização. Verifique o scraper ou atualize manualmente.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="panel flex items-start gap-4 px-5 py-4 border-l-[3px] border-l-warn">
+          <span className="w-10 h-10 rounded-[12px] bg-warn-soft text-warn flex items-center justify-center flex-shrink-0">
+            <AlertTriangleIcon size={20} />
+          </span>
+          <div>
+            <h3 className="font-semibold text-navy text-[14.5px]">
+              {precosDesatualizados} preço{precosDesatualizados > 1 ? 's' : ''} desatualizado{precosDesatualizados > 1 ? 's' : ''}
+            </h3>
+            <p className="text-steel text-[13px] mt-0.5">
+              Há mais de {precoStaleDias} dias sem atualização. Verifique o scraper ou atualize manualmente.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Regiões */}
-      <section>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Regiões</CardTitle>
+      <section className="panel overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[var(--line)]">
+          <div>
+            <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Regiões</h3>
+            <p className="text-[12.5px] text-steel mt-0.5">
+              Região de preço do atacado usada pelo scraper
+            </p>
+          </div>
+          <Button size="sm" onClick={() => setShowAddRegiao(true)}>
+            <PlusIcon size={15} />
+            Adicionar
+          </Button>
+        </div>
+
+        {regioes.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-navy font-semibold mb-1">Nenhuma região cadastrada</p>
+            <p className="text-steel text-sm mb-4">Cadastre a primeira região para o scraper buscar preços</p>
             <Button size="sm" onClick={() => setShowAddRegiao(true)}>
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Adicionar
+              <PlusIcon size={15} />
+              Adicionar região
             </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-ice/50">
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CEP</TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {regioes.map((r) => (
-                  <TableRow key={r.region_id}>
-                    <TableCell className="font-mono text-sm text-navy">{r.region_id}</TableCell>
-                    <TableCell>
-                      <span className={`font-medium ${r.ativo ? 'text-navy' : 'text-steel line-through'}`}>{r.nome}</span>
-                      {!r.ativo && <Badge variant="warning" className="ml-2 text-xs">Inativo</Badge>}
-                    </TableCell>
-                    <TableCell className="text-sm text-steel">{r.cep_referencia || '-'}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setEditingRegiao(r)}>Editar</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleRegiaoAtivo(r.region_id, r.ativo)}>
-                          {r.ativo ? 'Desativar' : 'Ativar'}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-700 hover:bg-red-50" onClick={() => handleDeleteRegiao(r.region_id)}>
-                          Excluir
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          </div>
+        ) : (
+          <div>
+            <div className="hidden sm:flex items-center gap-4 px-4 py-2.5 bg-ice/70 border-b border-[var(--line)]">
+              <span className="th w-[180px] px-0">ID</span>
+              <span className="th flex-1 px-0">Nome</span>
+              <span className="th w-[130px] px-0">CEP</span>
+              <span className="th w-[210px] px-0 text-right">Ações</span>
+            </div>
+            <div className="divide-y divide-[var(--line)]">
+              {regioes.map((r) => (
+                <div
+                  key={r.region_id}
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-ice/40 sm:flex-nowrap"
+                >
+                  <span className="hidden font-mono text-[12.5px] text-steel sm:block sm:w-[180px] truncate">{r.region_id}</span>
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className={`font-medium text-[14px] truncate ${r.ativo ? 'text-navy' : 'text-steel line-through'}`}>
+                      {r.nome}
+                    </span>
+                    {!r.ativo && <Badge variant="warning">Inativo</Badge>}
+                  </span>
+                  <span className="hidden text-[13px] text-steel tabular-nums sm:block sm:w-[130px]">{r.cep_referencia || '-'}</span>
+                  <div className="flex w-full items-center justify-end gap-1 sm:w-[210px]">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingRegiao(r)}>Editar</Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleToggleRegiaoAtivo(r.region_id, r.ativo)}>
+                      {r.ativo ? 'Desativar' : 'Ativar'}
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteRegiao(r.region_id)}>
+                      Excluir
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
-      {/* Configurações do Scraper */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Configurações do Scraper</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSaveConfig} className="space-y-4 max-w-lg">
+      <div className="space-y-5">
+        {/* Configurações do Scraper */}
+        <section className="panel overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--line)]">
+            <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Configurações do Scraper</h3>
+            <p className="text-[12.5px] text-steel mt-0.5">Região de coleta e janela de validade do preço</p>
+          </div>
+          <div className="p-5">
+            <form onSubmit={handleSaveConfig} className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="tenda-region-id">Região Tenda</Label>
                 <Input
@@ -238,7 +245,7 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
                   onChange={(e) => setTendaRegionId(e.target.value)}
                   placeholder="Ex: 000010"
                 />
-                <p className="text-xs text-steel mt-1">Identificador da região para o scraper de preços</p>
+                <p className="text-[11.5px] text-steel mt-1.5">Identificador da região para o scraper de preços</p>
               </div>
               <div>
                 <Label htmlFor="preco-stale-dias">Dias para considerar preço desatualizado</Label>
@@ -248,9 +255,10 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
                   min={1}
                   value={precoStaleDias}
                   onChange={(e) => setPrecoStaleDias(e.target.value)}
+                  className="max-w-[140px]"
                 />
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-wrap gap-2 pt-1 sm:col-span-2">
                 <Button type="submit" disabled={savingConfig} loading={savingConfig}>
                   Salvar Configurações
                 </Button>
@@ -260,30 +268,37 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
               </div>
             </form>
             {scraperResultado && (
-              <div className={`mt-4 p-3 rounded-lg text-sm ${ scraperResultado.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700' }`}>
+              <div
+                className={`mt-4 px-3 py-2.5 rounded-xl text-[13px] border ${
+                  scraperResultado.startsWith('Erro')
+                    ? 'bg-danger-soft text-danger border-danger-line'
+                    : 'bg-success-soft text-success border-success-line'
+                }`}
+              >
                 {scraperResultado}
               </div>
             )}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
 
-      {/* Backup */}
-      <section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Backup</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button variant="secondary" onClick={handleExportCSV}>
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+        {/* Backup */}
+        <section className="panel overflow-hidden">
+          <div className="px-5 py-4 border-b border-[var(--line)]">
+            <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Backup</h3>
+            <p className="text-[12.5px] text-steel mt-0.5">Exportação das regiões em CSV</p>
+          </div>
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[13px] text-steel max-w-lg">
+              Gera um arquivo com todas as regiões cadastradas, incluindo as inativas. Guarde fora do sistema
+              como cópia de segurança.
+            </p>
+            <Button variant="secondary" onClick={handleExportCSV} className="self-start sm:self-auto">
+              <DownloadIcon size={15} />
               Exportar Regiões CSV
             </Button>
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
+      </div>
 
       {/* Modal Editar/Adicionar Região */}
       <Dialog open={editingRegiao !== null || showAddRegiao} onClose={() => { setEditingRegiao(null); setShowAddRegiao(false); setNewRegiao({ region_id: '', nome: '', cep_referencia: '' }); }} title={editingRegiao ? 'Editar Região' : 'Adicionar Região'} size="md">
@@ -329,7 +344,7 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
               disabled={savingRegiao}
             />
           </div>
-          <div className="flex gap-3 pt-2">
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--line)]">
             <Button variant="secondary" type="button" onClick={() => { setEditingRegiao(null); setShowAddRegiao(false); setNewRegiao({ region_id: '', nome: '', cep_referencia: '' }); }} disabled={savingRegiao}>
               Cancelar
             </Button>

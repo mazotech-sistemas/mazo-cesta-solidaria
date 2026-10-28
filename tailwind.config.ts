@@ -17,6 +17,22 @@ module.exports = {
         paper: '#FFFFFF',
         ink: '#052049',
         label: '#1C355E',
+        // Semânticas: único lugar para estado de alerta/erro/sucesso.
+        warn: {
+          DEFAULT: '#B54708',
+          soft: '#FFFAEB',
+          line: '#FEDF89',
+        },
+        danger: {
+          DEFAULT: '#B42318',
+          soft: '#FEF3F2',
+          line: '#FDA29B',
+        },
+        success: {
+          DEFAULT: '#05603A',
+          soft: '#ECFDF3',
+          line: '#A6F4C5',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

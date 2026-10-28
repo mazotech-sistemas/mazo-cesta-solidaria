@@ -45,19 +45,19 @@ describe('Alerts', () => {
   it('aplica variant warning no alerta de estoque baixo', () => {
     render(<Alerts estoqueBaixo={2} precosDesatualizados={0} />);
     const alertLink = screen.getByRole('link', { name: /estoque/i });
-    expect(alertLink).toHaveClass('border-amber-500');
+    expect(alertLink).toHaveClass('border-l-warn');
     const iconContainer = alertLink.querySelector('div.w-10');
-    expect(iconContainer).toHaveClass('bg-amber/10');
-    expect(iconContainer).toHaveClass('text-amber-700');
+    expect(iconContainer).toHaveClass('bg-warn-soft');
+    expect(iconContainer).toHaveClass('text-warn');
   });
 
   it('aplica variant error no alerta de preços desatualizados', () => {
     render(<Alerts estoqueBaixo={0} precosDesatualizados={2} />);
     const alertLink = screen.getByRole('link', { name: /configurações/i });
-    expect(alertLink).toHaveClass('border-red-500');
+    expect(alertLink).toHaveClass('border-l-danger');
     const iconContainer = alertLink.querySelector('div.w-10');
-    expect(iconContainer).toHaveClass('bg-red/10');
-    expect(iconContainer).toHaveClass('text-red-700');
+    expect(iconContainer).toHaveClass('bg-danger-soft');
+    expect(iconContainer).toHaveClass('text-danger');
   });
 
   it('renderiza ícones SVG corretos para cada variant', () => {

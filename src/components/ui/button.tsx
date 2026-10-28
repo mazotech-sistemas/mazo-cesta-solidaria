@@ -2,7 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Spinner } from './spinner';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'outline';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'outline';
 type Size = 'default' | 'sm' | 'lg' | 'icon';
 
 const base =
@@ -13,8 +13,9 @@ const variants: Record<Variant, string> = {
     'bg-royal text-paper hover:bg-royal/90 active:bg-royal/80 shadow-sm',
   secondary:
     'border-2 border-royal text-royal bg-transparent hover:bg-royal/5 active:bg-royal/10',
-  ghost: 'text-steel hover:text-navy hover:bg-ice/50 rounded-xl',
-  destructive: 'bg-red-600 text-paper hover:bg-red-700 active:bg-red-800',
+  ghost: 'text-steel hover:text-navy hover:bg-ice/70',
+  danger: 'text-danger hover:bg-danger-soft hover:text-danger',
+  destructive: 'bg-danger text-paper hover:bg-danger/90 active:bg-danger/80',
   outline:
     'border border-[var(--line)] text-navy bg-paper hover:bg-ice/50',
 };

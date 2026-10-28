@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { useToast } from '@/components/ui/toast';
 import Link from 'next/link';
+import { SearchIcon, HistoryIcon, CalendarIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 
 interface HistoricoClientProps {
@@ -95,149 +96,164 @@ export default function HistoricoClient({ compras, isAdmin, userId }: HistoricoC
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="card p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex flex-col sm:flex-row gap-3 flex-wrap flex-1">
-          <Input
-            type="text"
-            placeholder="Buscar por produto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:w-64"
-          />
-          <Input
-            type="date"
-            value={filterDateStart}
-            onChange={(e) => setFilterDateStart(e.target.value)}
-            className="sm:w-40"
-            aria-label="Data inicial"
-          />
-          <span className="text-steel self-center">até</span>
-          <Input
-            type="date"
-            value={filterDateEnd}
-            onChange={(e) => setFilterDateEnd(e.target.value)}
-            className="sm:w-40"
-            aria-label="Data final"
-          />
+      <div className="panel flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center min-w-0">
+          <div className="relative sm:w-64">
+            <SearchIcon
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-steel/70"
+            />
+            <Input
+              type="text"
+              placeholder="Buscar por produto..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar por produto"
+              className="pl-10"
+            />
+          </div>
+          <div className="flex min-w-0 items-center gap-1.5 rounded-xl bg-ice/60 px-2 py-1">
+            <CalendarIcon size={15} className="hidden text-steel/80 flex-shrink-0 ml-1 sm:block" />
+            <div className="w-[132px] sm:w-[122px]">
+              <Input
+                type="date"
+                value={filterDateStart}
+                onChange={(e) => setFilterDateStart(e.target.value)}
+                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px] focus:ring-0"
+                aria-label="Data inicial"
+              />
+            </div>
+            <span className="text-steel/60 text-xs">até</span>
+            <div className="w-[132px] sm:w-[122px]">
+              <Input
+                type="date"
+                value={filterDateEnd}
+                onChange={(e) => setFilterDateEnd(e.target.value)}
+                className="border-0 bg-transparent px-0 py-1 text-[12.5px] sm:text-[13px] focus:ring-0"
+                aria-label="Data final"
+              />
+            </div>
+          </div>
         </div>
-        <span className="text-sm text-steel">
+        <span className="text-[12.5px] text-steel tabular-nums whitespace-nowrap">
           {filtradas.length} de {compras.length} compra{compras.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {filtradas.length === 0 ? (
-        <Card className="p-12 text-center">
-          <CardContent>
-            <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 className="font-semibold text-navy mb-1">Nenhuma compra encontrada</h3>
-            <p className="text-steel mb-4">
-              {compras.length === 0
-                ? 'Ainda não há compras registradas. Vá ao Simulador para criar a primeira.'
-                : 'Tente ajustar os filtros de busca.'}
-            </p>
-            {compras.length === 0 && (
-              <Link href="/simulador" className="btn-primary inline-flex mt-2">
-                Ir para Simulador
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        <div className="panel px-6 py-14 text-center">
+          <span className="inline-flex w-12 h-12 rounded-[14px] bg-royal/10 text-royal items-center justify-center mb-4">
+            <HistoryIcon size={22} />
+          </span>
+          <h3 className="font-semibold text-navy mb-1">Nenhuma compra encontrada</h3>
+          <p className="text-steel mb-5 text-sm">
+            {compras.length === 0
+              ? 'Ainda não há compras registradas. Vá ao Simulador para criar a primeira.'
+              : 'Tente ajustar os filtros de busca.'}
+          </p>
+          {compras.length === 0 && (
+            <Link href="/simulador" className="btn-primary">
+              Ir para Simulador
+            </Link>
+          )}
+        </div>
       ) : (
-        <Card className="overflow-hidden">
-          <CardContent className="p-0 divide-y divide-[var(--line)]">
-            {filtradas.map((compra) => {
-              const isExpanded = expanded[compra.id];
-              const podeExcluir = isAdmin || compra.criado_por === userId;
+        <div className="panel overflow-hidden divide-y divide-[var(--line)]">
+          {filtradas.map((compra) => {
+            const isExpanded = expanded[compra.id];
+            const podeExcluir = isAdmin || compra.criado_por === userId;
 
-              return (
-                <div key={compra.id} className="p-4 hover:bg-ice/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <button
-                        onClick={() => handleExpand(compra.id)}
-                        className="flex items-center justify-center w-10 h-10 rounded-xl bg-royal/10 text-royal flex-shrink-0 transition-colors hover:bg-royal/20"
-                        aria-expanded={isExpanded}
-                        aria-label={isExpanded ? 'Recolher detalhes' : 'Expandir detalhes'}
-                      >
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className={isExpanded ? 'rotate-180' : ''}
-                          style={{ transition: 'transform 150ms' }}
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-navy">
-                            {compra.numero_cestas} cesta{compra.numero_cestas > 1 ? 's' : ''}
-                          </p>
-                          <Badge variant="secondary">
-                            {new Date(compra.criado_em).toLocaleDateString('pt-BR', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
+            return (
+              <div key={compra.id} className={`transition-colors ${isExpanded ? 'bg-ice/30' : 'hover:bg-ice/40'}`}>
+                <div className="flex items-start gap-3 px-4 py-3 sm:gap-4">
+                  <button
+                    onClick={() => handleExpand(compra.id)}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg text-steel bg-paper border border-[var(--line)] flex-shrink-0 self-start transition-colors hover:text-navy hover:border-steel/40"
+                    aria-expanded={isExpanded}
+                    aria-label={isExpanded ? 'Recolher detalhes' : 'Expandir detalhes'}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+
+                  <div className="flex flex-1 min-w-0 items-baseline justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-baseline sm:gap-3">
+                      <p className="font-semibold text-navy text-[14.5px] whitespace-nowrap">
+                        {compra.numero_cestas} cesta{compra.numero_cestas > 1 ? 's' : ''}
+                      </p>
+                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-steel tabular-nums sm:mt-0 sm:text-[12px]">
+                        <span>
+                          {new Date(compra.criado_em).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })}
+                          <span className="hidden sm:inline">
+                            {' '}
+                            {new Date(compra.criado_em).toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
-                          </Badge>
-                          {isAdmin && compra.profiles && (
-                            <Badge variant={compra.profiles.is_admin ? 'primary' : 'secondary'}>
-                              {compra.profiles.nome}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-steel text-sm">
-                          {compra.itens_exibicao.length} item{compra.itens_exibicao.length !== 1 ? 's' : ''} -{' '}
-                          <span className="font-semibold text-navy">
-                            R$ {compra.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
-                        </p>
-                      </div>
+                        </span>
+                        <span className="whitespace-nowrap">
+                          {compra.itens_exibicao.length} item{compra.itens_exibicao.length !== 1 ? 's' : ''}
+                        </span>
+                        {isAdmin && compra.profiles && (
+                          <span className="hidden whitespace-nowrap sm:inline">por {compra.profiles.nome}</span>
+                        )}
+                      </p>
                     </div>
-
-                    {podeExcluir && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(compra.id)}
-                        disabled={deleting === compra.id}
-                        className="text-red-700 hover:bg-red-50"
-                      >
-                        {deleting === compra.id ? 'Excluindo...' : 'Excluir'}
-                      </Button>
-                    )}
+                    <span className="text-[15px] font-extrabold text-navy tabular-nums whitespace-nowrap">
+                      R$ {compra.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
 
-                  {isExpanded && compra.itens_exibicao.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-[var(--line)] px-4 pb-4">
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        {compra.itens_exibicao.map((item, idx) => (
-                          <div key={idx} className="p-3 bg-ice/50 rounded-xl">
-                            <p className="font-medium text-navy text-sm truncate">{item.nome}</p>
-                            <div className="flex items-center justify-between text-xs text-steel mt-1">
-                              <span>{item.quantidade}x R$ {item.preco_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                              <span className="font-medium text-navy">
-                                R$ {item.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                  {podeExcluir && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(compra.id)}
+                      disabled={deleting === compra.id}
+                      className="flex-shrink-0 self-start"
+                    >
+                      {deleting === compra.id ? 'Excluindo...' : 'Excluir'}
+                    </Button>
                   )}
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+
+                {isExpanded && compra.itens_exibicao.length > 0 && (
+                  <div className="px-4 pb-4 pl-14 sm:pl-16">
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {compra.itens_exibicao.map((item, idx) => (
+                        <div key={idx} className="rounded-xl bg-paper border border-[var(--line)] px-3 py-2">
+                          <p className="font-medium text-navy text-[13px] truncate">{item.nome}</p>
+                          <div className="flex items-center justify-between gap-2 text-[11.5px] text-steel mt-1 tabular-nums">
+                            <span>
+                              {item.quantidade}x R$ {item.preco_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                            <span className="font-semibold text-navy">
+                              R$ {item.subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

@@ -29,7 +29,7 @@ export default async function ConfiguracoesPage() {
   const configMap = Object.fromEntries((configs || []).map(c => [c.chave, c.valor]));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="page-head">
         <div>
           <h1 className="page-title">Configurações</h1>

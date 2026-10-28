@@ -38,7 +38,7 @@ export default async function HistoricoPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="page-head">
         <div>
           <h1 className="page-title">Histórico de Compras</h1>

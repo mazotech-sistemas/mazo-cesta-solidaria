@@ -13,18 +13,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-2.5 text-ink bg-paper border rounded-xl transition-colors',
-            'placeholder:text-steel/50',
+            'placeholder:text-steel/60',
             'focus:border-royal focus:ring-2 focus:ring-royal/20 focus:outline-none',
             'disabled:bg-ice disabled:cursor-not-allowed',
             error
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+              ? 'border-danger focus:border-danger focus:ring-danger/20'
               : 'border-[var(--line)]',
             className
           )}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-xs text-red-600">{error}</p>
+          <p className="mt-1 text-xs font-medium text-danger">{error}</p>
         )}
       </div>
     );

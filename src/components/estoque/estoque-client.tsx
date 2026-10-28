@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto } from '@/types/database';
 import { Input } from '@/components/ui/input';
+import { SearchIcon, PlusIcon, DownloadIcon, UploadIcon } from '@/components/icons';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -224,39 +225,43 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
-      <div className="surface surface-strong p-4 flex items-center gap-3 flex-wrap">
-        <div className="flex-1 min-w-[240px]">
-          <Input
-            type="text"
-            placeholder="Buscar por nome ou marca..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Buscar por nome ou marca"
-            className="bg-paper"
-          />
+      {/* Toolbar: busca e filtro à esquerda, ações à direita */}
+      <div className="panel flex flex-col gap-3 p-3 xl:flex-row xl:items-center">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center min-w-0">
+          <div className="relative flex-1 min-w-0">
+            <SearchIcon
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-steel/70"
+            />
+            <Input
+              type="text"
+              placeholder="Buscar por nome ou marca..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Buscar por nome ou marca"
+              className="pl-10"
+            />
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer sm:whitespace-nowrap rounded-xl px-2 py-1 -mx-2 hover:bg-ice/60 transition-colors">
+            <input
+              type="checkbox"
+              checked={showLowStock}
+              onChange={(e) => setShowLowStock(e.target.checked)}
+              className="w-4 h-4 rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20"
+            />
+            <span className="text-[13px] text-steel font-medium">Só estoque baixo (≤2)</span>
+          </label>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showLowStock}
-            onChange={(e) => setShowLowStock(e.target.checked)}
-            className="w-4 h-4 text-royal border-[var(--line)] rounded focus:ring-2 focus:ring-royal/20"
-          />
-          <span className="text-sm text-steel font-medium">Só estoque baixo (≤2)</span>
-        </label>
+
         {isAdmin && (
-          <>
+          <div className="flex flex-wrap items-center gap-2 sm:border-l sm:border-[var(--line)] sm:pl-3">
             <Button size="sm" onClick={abrirNovoProduto}>
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              <PlusIcon size={15} />
               Novo Produto
             </Button>
-            <Button size="sm" variant="secondary" onClick={handleExportarCSV}>
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+            <Button size="sm" variant="outline" onClick={handleExportarCSV}>
+              <DownloadIcon size={15} />
               Exportar CSV
             </Button>
             <label className="cursor-pointer">
@@ -266,21 +271,19 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 className="hidden"
                 onChange={handleImportarCSV}
               />
-              <span className="inline-flex items-center text-sm font-medium text-royal hover:text-royal/80 px-3 py-1.5 rounded-md border border-royal/30 hover:bg-royal/5">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-navy bg-paper border border-[var(--line)] rounded-[20px] hover:bg-ice/60 transition-colors">
+                <UploadIcon size={15} />
                 Importar CSV
               </span>
             </label>
-          </>
+          </div>
         )}
       </div>
 
       {/* Table */}
-      <div className="surface surface-strong overflow-hidden">
+      <div className="panel overflow-hidden">
         {filtered.length === 0 ? (
-            <div className="p-12 text-center">
+            <div className="px-6 py-14 text-center">
               <svg className="w-16 h-16 mx-auto mb-4 text-steel/30" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
@@ -295,10 +298,8 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                   : 'Tente ajustar os filtros de busca'}
               </p>
               {produtos.length === 0 && isAdmin && (
-                <button type="button" onClick={abrirNovoProduto} className="btn-primary mt-4">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+                <button type="button" onClick={abrirNovoProduto} className="btn-primary mt-5">
+                  <PlusIcon size={15} />
                   Novo Produto
                 </button>
               )}
@@ -309,35 +310,37 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Produto</TableHead>
-                    <TableHead>Marca</TableHead>
+                    <TableHead className="hidden md:table-cell">Marca</TableHead>
                     <TableHead align="right">Estoque</TableHead>
-                    <TableHead align="right">Preço Atual</TableHead>
-                    <TableHead align="right">Qtd/Cesta</TableHead>
-                    <TableHead align="center">Última Atualização</TableHead>
+                    <TableHead align="right" className="hidden sm:table-cell">Preço Atual</TableHead>
+                    <TableHead align="right" className="hidden xl:table-cell">Qtd/Cesta</TableHead>
+                    <TableHead align="right" className="hidden xl:table-cell">Última Atualização</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-navy">{p.nome}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-medium text-navy truncate max-w-[180px] sm:max-w-[260px]" title={p.nome}>{p.nome}</span>
                           {p.estoque_atual <= 2 && (
                             <Badge variant="warning">Baixo</Badge>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-steel">{p.marca || '-'}</TableCell>
+                      <TableCell className="hidden whitespace-nowrap text-steel text-[13px] md:table-cell">{p.marca || '-'}</TableCell>
                       <TableCell align="right" className="font-medium">
-                        <span className={p.estoque_atual <= 2 ? 'text-red-700 font-bold' : 'text-navy'}>
+                        <span className={p.estoque_atual <= 2 ? 'text-danger font-bold' : 'text-navy'}>
                           {p.estoque_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
                       </TableCell>
-                      <TableCell align="right" className="font-medium text-navy">
+                      <TableCell align="right" className="hidden font-medium text-navy sm:table-cell">
                         R$ {p.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell align="right">{p.qtd_por_cesta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell align="center" className="text-steel text-xs">
+                      <TableCell align="right" className="hidden xl:table-cell text-steel">
+                        {p.qtd_por_cesta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell align="right" className="hidden xl:table-cell text-steel text-[13px] tabular-nums">
                         {p.ultima_atualizacao_preco
                           ? new Date(p.ultima_atualizacao_preco).toLocaleDateString('pt-BR')
                           : '-'}
@@ -350,7 +353,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
           )}
         </div>
 
-      <p className="text-xs text-steel/60">
+      <p className="text-[12px] text-steel tabular-nums">
         Mostrando {filtered.length} de {produtos.length} produto{produtos.length !== 1 ? 's' : ''}
       </p>
 

@@ -4,25 +4,37 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
+import {
+  DashboardIcon,
+  PackageIcon,
+  CalculatorIcon,
+  HistoryIcon,
+  UsersIcon,
+  SettingsIcon,
+  LogOutIcon,
+  XIcon,
+} from '@/components/icons';
 
 interface SidebarProps {
   user: { id: string; email?: string; user_metadata?: { nome?: string } };
   profile: { nome: string; is_admin: boolean } | null;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { href: '/estoque', label: 'Estoque', icon: 'package' },
-  { href: '/simulador', label: 'Simulador', icon: 'calculator' },
-  { href: '/historico', label: 'Histórico', icon: 'history' },
+  { href: '/dashboard', label: 'Dashboard', Icon: DashboardIcon },
+  { href: '/estoque', label: 'Estoque', Icon: PackageIcon },
+  { href: '/simulador', label: 'Simulador', Icon: CalculatorIcon },
+  { href: '/historico', label: 'Histórico', Icon: HistoryIcon },
 ] as const;
 
 const adminNavItems = [
-  { href: '/usuarios', label: 'Usuários', icon: 'users' },
-  { href: '/configuracoes', label: 'Configurações', icon: 'settings' },
+  { href: '/usuarios', label: 'Usuários', Icon: UsersIcon },
+  { href: '/configuracoes', label: 'Configurações', Icon: SettingsIcon },
 ] as const;
 
-export default function Sidebar({ user, profile }: SidebarProps) {
+export default function Sidebar({ user, profile, open = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const supabase = createClient();
 
@@ -35,95 +47,114 @@ export default function Sidebar({ user, profile }: SidebarProps) {
   }
 
   return (
-    <aside className="w-[280px] navy-panel flex flex-col h-screen sticky top-0">
-      {/* Header */}
-      <div className="p-6 pb-4">
-        <Link href="/dashboard" className="flex items-center gap-3 mb-6" aria-label="Cesta Solidária - Dashboard">
-          <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Image
-              src="/logos/mazotech-sem-texto-white.svg"
-              alt="Mazotech Sistemas"
-              width={28}
-              height={28}
-              className="flex-shrink-0"
-              priority
-            />
-          </div>
-          <div className="leading-tight">
-            <span className="font-extrabold tracking-[-0.02em] text-[17px] block text-paper">Cesta Solidária</span>
-            <span className="text-[11px] tracking-widest uppercase text-white/60 font-semibold">Mazotech Sistemas</span>
-          </div>
-        </Link>
-      </div>
+    <aside
+      id="app-sidebar"
+      className={`navy-panel flex flex-col w-[272px] shrink-0 h-screen z-50
+        fixed inset-y-0 left-0 transition-transform duration-200 ease-out
+        lg:sticky lg:top-0 lg:z-auto lg:translate-x-0
+        ${open ? 'translate-x-0' : '-translate-x-full'}`}
+    >
+      <div className="relative z-10 flex flex-col flex-1 min-h-0">
+        <div className="flex items-start justify-between gap-2 px-5 pt-6 pb-5">
+          <Link href="/dashboard" className="flex items-center gap-3" aria-label="Cesta Solidária - Dashboard">
+            <span className="w-10 h-10 rounded-[14px] bg-white/10 ring-1 ring-white/15 flex items-center justify-center flex-shrink-0">
+              <Image
+                src="/logos/mazotech-sem-texto-white.svg"
+                alt="Mazotech Sistemas"
+                width={24}
+                height={24}
+                priority
+              />
+            </span>
+            <span className="leading-tight">
+              <span className="block text-[16px] font-extrabold tracking-[-0.02em] text-paper">Cesta Solidária</span>
+              <span className="block mt-0.5 text-[10px] tracking-[0.16em] uppercase text-white/50 font-semibold">
+                Mazotech Sistemas
+              </span>
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar menu"
+            className="lg:hidden -mr-1 mt-0.5 p-1.5 rounded-lg text-white/60 hover:text-paper hover:bg-white/10 transition-colors"
+          >
+            <XIcon size={18} />
+          </button>
+        </div>
 
-      {/* User */}
-      <div className="px-6 py-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/10 text-paper flex items-center justify-center font-extrabold text-[14px]">
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-paper truncate text-[14px]">{userName}</p>
-            <p className="text-xs text-white/60 capitalize">{profile?.is_admin ? 'Administrador' : 'Voluntário'}</p>
+        <div className="px-5 pb-5">
+          <div className="flex items-center gap-3 rounded-[14px] bg-white/[0.06] ring-1 ring-white/10 px-3 py-2.5">
+            <span className="w-9 h-9 rounded-[11px] bg-white/10 text-paper flex items-center justify-center font-extrabold text-[13px] tracking-wide">
+              {initials}
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block font-semibold text-paper truncate text-[13px]">{userName}</span>
+              <span className="block text-[11px] text-white/55 truncate">
+                {profile?.is_admin ? 'Administrador' : 'Voluntário'}
+              </span>
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-thin" aria-label="Navegação principal">
-        <div className="px-3 pb-2 text-[10px] font-semibold text-white/40 uppercase tracking-widest">
-          Principal
-        </div>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+        <nav className="flex-1 min-h-0 px-3 pb-4 overflow-y-auto scrollbar-thin" aria-label="Navegação principal">
+          <p className="px-3 pb-2 text-[10px] font-semibold text-white/45 uppercase tracking-[0.16em]">
+            Principal
+          </p>
+          <div className="space-y-0.5">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <item.Icon size={18} className={isActive ? 'text-mint' : 'text-white/50'} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
 
-        {profile?.is_admin && (
-          <>
-            <div className="px-3 pt-4 mt-4 border-t border-white/10">
-              <p className="px-0 pb-2 text-[10px] font-semibold text-white/40 uppercase tracking-widest">
+          {profile?.is_admin && (
+            <>
+              <p className="px-3 pt-6 pb-2 text-[10px] font-semibold text-white/45 uppercase tracking-[0.16em]">
                 Administração
               </p>
-              {adminNavItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </nav>
+              <div className="space-y-0.5">
+                {adminNavItems.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onClose}
+                      className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                      aria-current={isActive ? 'page' : undefined}
+                    >
+                      <item.Icon size={18} className={isActive ? 'text-mint' : 'text-white/50'} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </nav>
 
-      {/* Footer / Logout */}
-      <div className="p-6 pt-4 mt-auto border-t border-white/10">
-        <button
-          onClick={handleLogout}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white/80 hover:text-paper hover:bg-white/10 rounded-[12px] transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Sair
-        </button>
-        <p className="mt-4 text-center text-xs text-white/30">Cesta Solidária v1.0</p>
+        <div className="px-3 py-4 border-t border-white/10">
+          <button
+            onClick={handleLogout}
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white/70 hover:text-paper hover:bg-white/10 rounded-xl transition-colors"
+          >
+            <LogOutIcon size={17} />
+            Sair
+          </button>
+          <p className="mt-3 text-center text-[10px] tracking-wider text-white/35">Cesta Solidária v1.0</p>
+        </div>
       </div>
     </aside>
   );

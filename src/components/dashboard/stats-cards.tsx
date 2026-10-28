@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface StatsCardsProps {
@@ -20,26 +19,26 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       label: 'Produtos Cadastrados',
       value: stats.totalProdutos.toLocaleString('pt-BR'),
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
           <path d="M3.3 7 12 12l8.7-5" />
           <path d="M12 22V12" />
         </svg>
       ),
-      iconBg: 'bg-royal/10 text-royal',
+      iconClass: 'text-white/55',
       href: '/estoque',
     },
     {
       label: 'Estoque Baixo',
       value: stats.estoqueBaixo.toLocaleString('pt-BR'),
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
           <path d="M12 9v4" />
           <path d="M12 17h.01" />
         </svg>
       ),
-      iconBg: 'bg-mint/10 text-mint',
+      iconClass: 'text-mint',
       badge: stats.estoqueBaixo > 0 ? `${stats.estoqueBaixo} itens` : null,
       badgeVariant: 'warning' as const,
       href: '/estoque',
@@ -48,12 +47,12 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       label: 'Preços Desatualizados',
       value: stats.precosDesatualizados.toLocaleString('pt-BR'),
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
         </svg>
       ),
-      iconBg: 'bg-royal/10 text-royal',
+      iconClass: 'text-warn-line',
       badge: stats.precosDesatualizados > 0 ? `${stats.precosDesatualizados} itens` : null,
       badgeVariant: 'error' as const,
       href: '/configuracoes',
@@ -62,44 +61,41 @@ export default function StatsCards({ stats }: StatsCardsProps) {
       label: 'Compras Este Mês',
       value: stats.comprasMes.toLocaleString('pt-BR'),
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="8" cy="21" r="1" />
           <circle cx="19" cy="21" r="1" />
           <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
         </svg>
       ),
-      iconBg: 'bg-royal/10 text-royal',
+      iconClass: 'text-white/55',
       href: '/historico',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      {cards.map((card, idx) => (
-        <Link key={card.label} href={card.href} className="block group">
-          <div className={`
-            ${idx === 0 ? 'xl:col-span-2' : ''}
-            stat-card flex items-start gap-4 transition-transform group-hover:translate-y-[-2px]
-          `}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${card.iconBg}`}>
-              {card.icon}
-            </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <div className="metric">
-                {card.value}
-              </div>
-              <div className="metric-label text-white/70">
-                {card.label}
-              </div>
+    <section className="stat-panel" aria-label="Resumo do projeto">
+      <div className="relative z-10 grid grid-cols-2 gap-x-5 gap-y-6 px-5 py-6 sm:px-6 lg:grid-cols-4 lg:gap-0 lg:px-7 lg:py-7">
+        {cards.map((card) => (
+          <Link
+            key={card.label}
+            href={card.href}
+            className="group stat-card px-0 lg:px-6 lg:first:pl-0 lg:last:pr-0 lg:border-l lg:border-white/10 lg:first:border-l-0"
+          >
+            <span className="flex items-center gap-2">
+              <span className={card.iconClass}>{card.icon}</span>
+              <span className="stat-label">{card.label}</span>
+            </span>
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="stat-value text-paper">{card.value}</span>
               {card.badge && (
-                <Badge variant={card.badgeVariant} className="mt-3">
+                <Badge variant={card.badgeVariant} className="mt-1">
                   {card.badge}
                 </Badge>
               )}
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

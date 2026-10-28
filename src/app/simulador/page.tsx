@@ -12,7 +12,7 @@ export default async function SimuladorPage() {
     .order('nome');
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="page-head">
         <div>
           <h1 className="page-title">Simulador de Cesta</h1>

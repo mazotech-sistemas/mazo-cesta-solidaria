@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
+import { Spinner } from '@/components/ui/spinner';
+import { PlusIcon } from '@/components/icons';
 
 interface UsuariosClientProps {
   users: Profile[];
@@ -86,80 +87,84 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
     if (data) setUsers(data);
   }
 
+  const admins = users.filter(u => u.is_admin).length;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy">Lista de Usuários</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-[18px] font-extrabold tracking-[-0.02em] text-navy">Lista de Usuários</h2>
+          <p className="text-[13px] text-steel mt-0.5 tabular-nums">
+            {users.length} conta{users.length !== 1 ? 's' : ''} · {admins} admin{admins !== 1 ? 's' : ''}
+          </p>
+        </div>
         <Button onClick={() => setShowModal(true)}>
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <PlusIcon size={15} />
           Novo Usuário
         </Button>
       </div>
 
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Ativo Desde</TableHead>
-                <TableHead className="text-center">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium text-navy">{user.nome}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.is_admin ? 'primary' : 'secondary'}>
-                      {user.is_admin ? 'Administrador' : 'Voluntário'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-steel text-sm">
-                    {user.criado_em ? new Date(user.criado_em).toLocaleDateString('pt-BR') : '-'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleAdmin(user.id, user.is_admin)}
-                        disabled={toggling === user.id || user.id === currentUserId}
-                      >
-                        {toggling === user.id ? (
-                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        ) : (
-                          user.is_admin ? 'Para Voluntário' : 'Para Admin'
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-700 hover:bg-red-50"
-                        onClick={() => handleDelete(user.id)}
-                        disabled={deleting === user.id || user.id === currentUserId}
-                      >
-                        {deleting === user.id ? (
-                          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        ) : 'Excluir'}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="panel overflow-hidden">
+        <div className="hidden sm:flex items-center gap-4 px-4 py-2.5 bg-ice/70 border-b border-[var(--line)]">
+          <span className="th flex-1 px-0">Nome</span>
+          <span className="th w-[140px] px-0">Perfil</span>
+          <span className="th w-[120px] px-0 text-right">Ativo desde</span>
+          <span className="th w-[220px] px-0 text-right">Ações</span>
+        </div>
+        <div className="divide-y divide-[var(--line)]">
+          {users.map((user) => (
+            <div
+              key={user.id}
+              className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-ice/40 sm:flex-nowrap"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="w-9 h-9 rounded-[11px] bg-navy text-paper flex items-center justify-center text-[12px] font-extrabold flex-shrink-0">
+                  {user.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-medium text-navy text-[14px] truncate">{user.nome}</span>
+                  {user.id === currentUserId && (
+                    <span className="block text-[11.5px] text-steel">você</span>
+                  )}
+                </span>
+              </div>
+
+              <div className="flex-shrink-0 sm:w-[140px]">
+                <Badge variant={user.is_admin ? 'primary' : 'secondary'}>
+                  {user.is_admin ? 'Administrador' : 'Voluntário'}
+                </Badge>
+              </div>
+
+              <div className="hidden sm:block sm:w-[120px] text-right text-steel text-[13px] tabular-nums">
+                {user.criado_em ? new Date(user.criado_em).toLocaleDateString('pt-BR') : '-'}
+              </div>
+
+              <div className="flex w-full items-center justify-end gap-1 sm:w-[220px]">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                  disabled={toggling === user.id || user.id === currentUserId}
+                >
+                  {toggling === user.id ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    user.is_admin ? 'Para Voluntário' : 'Para Admin'
+                  )}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleDelete(user.id)}
+                  disabled={deleting === user.id || user.id === currentUserId}
+                >
+                  {deleting === user.id ? <Spinner className="size-4" /> : 'Excluir'}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Modal Novo Usuário */}
       <Dialog open={showModal} onClose={() => setShowModal(false)} title="Novo Usuário" size="md">
@@ -206,12 +211,12 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId }: 
               id="novo-admin"
               checked={newUser.is_admin}
               onChange={(e) => setNewUser({ ...newUser, is_admin: e.target.checked })}
-              className="w-4 h-4 text-royal border-[var(--line)] rounded focus:ring-2 focus:ring-royal/20"
+              className="w-4 h-4 rounded border-[var(--line)] text-royal focus:ring-2 focus:ring-royal/20"
               disabled={creating}
             />
             <Label htmlFor="novo-admin" className="mb-0 cursor-pointer">Administrador</Label>
           </div>
-          <div className="flex gap-3 pt-2">
+          <div className="flex justify-end gap-2 pt-2 border-t border-[var(--line)]">
             <Button variant="secondary" type="button" onClick={() => setShowModal(false)} disabled={creating}>
               Cancelar
             </Button>

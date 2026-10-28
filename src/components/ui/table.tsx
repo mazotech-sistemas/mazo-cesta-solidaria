@@ -15,7 +15,7 @@ function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableEleme
 function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={cn('bg-navy text-paper text-sm sticky top-0 z-10', className)}
+      className={cn('bg-ice/70 border-b border-[var(--line)]', className)}
       {...props}
     />
   );
@@ -33,10 +33,7 @@ function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectio
 function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
-      className={cn(
-        'hover:bg-ice/50 transition-colors border-b border-[var(--line)]',
-        className
-      )}
+      className={cn('transition-colors hover:bg-ice/40', className)}
       {...props}
     />
   );
@@ -50,9 +47,9 @@ function TableCell({ className, align = 'left', ...props }: TableCellProps) {
   return (
     <td
       className={cn(
-        'px-4 py-3 text-sm text-ink',
+        'px-3 py-3 text-sm text-ink sm:px-4',
         align === 'center' && 'text-center',
-        align === 'right' && 'text-right',
+        align === 'right' && 'text-right tabular-nums',
         className
       )}
       {...props}
@@ -60,11 +57,19 @@ function TableCell({ className, align = 'left', ...props }: TableCellProps) {
   );
 }
 
-function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+interface TableHeadProps extends React.ThHTMLAttributes<HTMLTableCellElement> {
+  align?: 'left' | 'center' | 'right';
+}
+
+function TableHead({ className, align = 'left', ...props }: TableHeadProps) {
   return (
     <th
+      scope="col"
       className={cn(
-        'px-4 py-3 text-left text-sm font-semibold text-paper',
+        'px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-label whitespace-nowrap sm:px-4',
+        align === 'center' && 'text-center',
+        align === 'right' && 'text-right',
+        align === 'left' && 'text-left',
         className
       )}
       {...props}
