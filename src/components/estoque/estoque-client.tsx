@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Produto, ProdutoUpdate } from '@/types/database';
 import { Input } from '@/components/ui/input';
@@ -78,6 +78,9 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
   const [erroEdicao, setErroEdicao] = useState('');
   const [excluindo, setExcluindo] = useState<Produto | null>(null);
   const [excluindoEmAndamento, setExcluindoEmAndamento] = useState(false);
+  const [acoesSobreConteudo, setAcoesSobreConteudo] = useState(false);
+
+  const tabelaRef = useRef<HTMLDivElement>(null);
 
   const { push: toast } = useToast();
 
@@ -100,6 +103,39 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
     setSearch('');
     setShowLowStock(false);
   };
+
+  // A coluna de ações fica presa à direita enquanto a tabela rola. O hairline
+  // dela só aparece quando a tabela realmente transborda; se ela cabe inteira
+  // na tela, a coluna não cobre nada e o traço viraria borda solta.
+  useEffect(() => {
+    // O scroll horizontal mora no wrapper que o Table cria em volta do <table>.
+    const scroller = tabelaRef.current?.querySelector('table')?.parentElement;
+    if (!(scroller instanceof HTMLElement)) return;
+
+    const avaliar = () =>
+      setAcoesSobreConteudo(scroller.scrollWidth > scroller.clientWidth + 1);
+
+    avaliar();
+    const observador =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(avaliar);
+    observador?.observe(scroller);
+    window.addEventListener('resize', avaliar);
+
+    return () => {
+      observador?.disconnect();
+      window.removeEventListener('resize', avaliar);
+    };
+  }, [filtered.length, isAdmin]);
+
+  // Sombra inset: em border-collapse o Chrome não pinta sombra externa de célula,
+  // então o traço fica no 1px de dentro da borda esquerda.
+  const sombraAcoes = acoesSobreConteudo ? ' shadow-[inset_1px_0_0_0_var(--line)]' : '';
+  // Fundos opacos porque a célula presa passa por cima do conteúdo: o hover é
+  // ice/40 achatado sobre paper (#F8F8F8) e o cabeçalho é ice/70 achatado (#F2F2F2).
+  const celulaAcoes =
+    'sticky right-0 z-10 w-[1%] whitespace-nowrap bg-paper pr-2 align-middle group-hover:bg-[#F8F8F8]' + sombraAcoes;
+  const cabecalhoAcoes =
+    'sticky right-0 z-20 w-[1%] whitespace-nowrap bg-[#F2F2F2]' + sombraAcoes;
 
   const handleCriarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -450,7 +486,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div ref={tabelaRef}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -461,13 +497,13 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                     <TableHead align="right" className="hidden xl:table-cell">Qtd/Cesta</TableHead>
                     <TableHead align="right" className="hidden min-[1360px]:table-cell">Última Atualização</TableHead>
                     {isAdmin && (
-                      <TableHead align="right" className="w-[1%] whitespace-nowrap">Ações</TableHead>
+                      <TableHead align="right" className={cabecalhoAcoes}>Ações</TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => (
-                    <TableRow key={p.id}>
+                    <TableRow key={p.id} className="group">
                       <TableCell>
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="font-medium text-navy truncate max-w-[180px] sm:max-w-[260px]" title={p.nome}>{p.nome}</span>
@@ -494,7 +530,7 @@ function EstoqueInner({ produtos, isAdmin }: EstoqueClientProps) {
                           : '-'}
                       </TableCell>
                       {isAdmin && (
-                        <TableCell align="right" className="w-[1%] whitespace-nowrap align-middle pr-2">
+                        <TableCell align="right" className={celulaAcoes}>
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               type="button"
