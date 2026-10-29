@@ -38,7 +38,6 @@ No **Dashboard Vercel > Settings > Environment Variables**, adicione **todas** p
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase Dashboard > Settings > API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API (service_role, **não** anon) |
-| `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` (não lida pelo código hoje; o backup semanal usa `CRON_SECRET` e grava no Storage do Supabase) |
 | `CRON_SECRET` | `segredo-para-cron` | `openssl rand -hex 32` |
 
 > ⚠️ **NUNCA** commite `.env` - use só o dashboard do Vercel.
