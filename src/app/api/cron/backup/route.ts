@@ -1,74 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { clienteServico, salvarBackup } from '@/lib/backup/armazenamento';
 
-// Endpoint interno para cron semanal de backup
-// Usa SUPABASE_SERVICE_ROLE_KEY para autenticar como serviço
-// Protegido por CRON_SECRET (Vercel passa no header Authorization: Bearer <secret>)
+// Cron semanal de backup. O Vercel Cron chama com Authorization: Bearer <CRON_SECRET>.
+// Grava o JSON no Storage (bucket `backups`) e atualiza o índice que a tela de
+// Usuários lê. Não depende de tabela nem de migração de banco.
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
-  const expectedSecret = process.env.CRON_SECRET;
+  const esperado = process.env.CRON_SECRET;
+  const recebido = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
-  // Vercel Cron passa: Authorization: Bearer <CRON_SECRET>
-  const cronSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-  if (!expectedSecret || cronSecret !== expectedSecret) {
+  if (!esperado || recebido !== esperado) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
+  const admin = clienteServico();
+  if (!admin) {
     return NextResponse.json({ error: 'Configuração Supabase ausente' }, { status: 500 });
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const [produtos, compras, precos, regions, config] = await Promise.all([
+    admin.from('produtos').select('*').order('id'),
+    admin.from('compras').select('*').order('criado_em', { ascending: false }),
+    admin.from('precos_historico').select('*').order('dia', { ascending: false }),
+    admin.from('regions').select('*').order('region_id'),
+    admin.from('config').select('*').order('chave'),
+  ]);
+
+  const falhas = [produtos, compras, precos, regions, config]
+    .map((r) => r.error?.message)
+    .filter(Boolean);
+  if (falhas.length > 0) {
+    return NextResponse.json(
+      { error: 'Falha ao ler tabelas', details: falhas },
+      { status: 500 },
+    );
+  }
+
+  const conteudo = {
+    gerado_em: new Date().toISOString(),
+    gerado_por: 'cron-semanal',
+    produtos: produtos.data ?? [],
+    compras: compras.data ?? [],
+    precos_historico: precos.data ?? [],
+    regions: regions.data ?? [],
+    config: config.data ?? [],
+  };
 
   try {
-    const [produtos, compras, precos, regions, config] = await Promise.all([
-      supabase.from('produtos').select('*').order('id'),
-      supabase.from('compras').select('*').order('criado_em', { ascending: false }),
-      supabase.from('precos_historico').select('*').order('dia', { ascending: false }),
-      supabase.from('regions').select('*').order('region_id'),
-      supabase.from('config').select('*').order('chave'),
-    ]);
-
-    const conteudo = {
-      gerado_em: new Date().toISOString(),
-      gerado_por: 'cron-semanal',
-      produtos: produtos.data ?? [],
-      compras: compras.data ?? [],
-      precos_historico: precos.data ?? [],
-      regions: regions.data ?? [],
-      config: config.data ?? [],
-    };
-
-    const totalLinhas =
-      conteudo.produtos.length +
-      conteudo.compras.length +
-      conteudo.precos_historico.length +
-      conteudo.regions.length +
-      conteudo.config.length;
-
-    // Registra na tabela backup_registros
-    const { error: insertError } = await supabase.from('backup_registros').insert({
-      criado_em: conteudo.gerado_em,
-      autor: 'cron-semanal',
-      linhas: totalLinhas,
-      conteudo: conteudo,
-    });
-
-    if (insertError) {
-      console.error('Erro ao registrar backup:', insertError);
-      return NextResponse.json({ error: 'Falha ao registrar backup', details: insertError.message }, { status: 500 });
-    }
-
+    const registro = await salvarBackup(admin, conteudo, 'cron-semanal');
     return NextResponse.json({
       success: true,
       gerado_em: conteudo.gerado_em,
-      total_linhas: totalLinhas,
+      arquivo: registro.arquivo,
+      bytes: registro.bytes,
+      total_linhas: registro.linhas,
       tabelas: {
         produtos: conteudo.produtos.length,
         compras: conteudo.compras.length,
@@ -79,6 +64,9 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('Erro no cron de backup:', err);
-    return NextResponse.json({ error: 'Erro interno', details: String(err) }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Falha ao gravar backup', details: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    );
   }
 }

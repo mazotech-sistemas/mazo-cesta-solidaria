@@ -151,9 +151,9 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
   const handleGerarBackup = async () => {
     setGerandoBackup(true);
     try {
-      // A API faz a leitura com a sessão do usuário e já registra o backup
-      // na tabela backup_registros (migração 002). Se a rota ainda não
-      // existe no deploy antigo, caímos para a coleta local das tabelas.
+      // A API faz a leitura com a sessão do usuário, guarda uma cópia no
+      // Storage e devolve o JSON. Se a rota não responder, caímos para a
+      // coleta local das tabelas.
       let conteudo: string;
       try {
         const res = await fetch('/api/backup?baixar=1', { cache: 'no-store' });

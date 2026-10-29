@@ -14,7 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { PlusIcon, DownloadIcon, UsersIcon } from '@/components/icons';
 
 interface BackupRegistro {
-  id: number;
+  id: string;
   criado_em: string;
   linhas: number;
   autor?: string | null;
@@ -42,15 +42,16 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
       return;
     }
     setCreating(true);
-    const supabase = createClient();
-    const { error } = await supabase.rpc('admin_criar_usuario', {
-      p_email: newUser.email,
-      p_senha: newUser.senha,
-      p_nome: newUser.nome,
-      p_is_admin: newUser.is_admin,
+    // Criação passa por /api/usuarios: a rota usa a service role, porque a
+    // função SQL admin_criar_usuario não existe em todos os ambientes.
+    const res = await fetch('/api/usuarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newUser),
     });
-    if (error) {
-      toast(error.message, 'error');
+    const dados = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast(dados.error ?? 'Erro ao criar usuário', 'error');
       setCreating(false);
       return;
     }
@@ -78,10 +79,12 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
   const handleDelete = async (userId: string) => {
     if (!confirm('Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.')) return;
     setDeleting(userId);
-    const supabase = createClient();
-    const { error } = await supabase.rpc('admin_excluir_usuario', { p_id: userId });
-    if (error) {
-      toast(error.message, 'error');
+    // Exclusão também via API: a função SQL admin_excluir_usuario existe em
+    // duas sobrecargas no banco de produção e a chamada fica ambígua.
+    const res = await fetch(`/api/usuarios?id=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    const dados = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast(dados.error ?? 'Erro ao excluir usuário', 'error');
     } else {
       toast('Usuário excluído', 'success');
       setUsers(prev => prev.filter(u => u.id !== userId));
@@ -144,7 +147,9 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
               </div>
 
               <div className="hidden sm:block sm:w-[120px] text-right text-steel text-[13px] tabular-nums">
-                {user.criado_em ? new Date(user.criado_em).toLocaleDateString('pt-BR') : '-'}
+                {user.criado_em
+                  ? new Date(user.criado_em).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                  : '-'}
               </div>
 
               <div className="flex w-full items-center justify-end gap-1 sm:w-[220px]">
@@ -190,7 +195,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
             {backups.slice(0, 5).map((b) => (
               <li key={b.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[13px]">
                 <span className="text-steel tabular-nums">
-                  {new Date(b.criado_em).toLocaleString('pt-BR')}
+                  {new Date(b.criado_em).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                 </span>
                 <span className="text-navy font-medium tabular-nums">{b.linhas} linha{b.linhas !== 1 ? 's' : ''}</span>
                 {b.autor && <span className="text-steel">por {b.autor}</span>}

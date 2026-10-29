@@ -538,3 +538,32 @@ test('regressao: criar, editar, simular, salvar compra, historico, CSV, usuarios
   await expect(page.locator(`table tr:has-text("${nome}")`)).toHaveCount(0);
   criados = [];
 });
+
+test('usuarios: cria e exclui conta pela tela', async ({ page }) => {
+  test.setTimeout(120000);
+  await login(page);
+  await irPara(page, '/usuarios');
+
+  const nome = `Usuario E2E ${RUN}`;
+  const email = `e2e-${RUN}@cestasolidaria.org`;
+
+  // O clique pode cair antes da hidratação do React: repete até o diálogo abrir.
+  await expect(async () => {
+    await page.click('button:has-text("Novo Usuário")');
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30000 });
+
+  await page.fill('#novo-email', email);
+  await page.fill('#novo-senha', 'senha123');
+  await page.fill('#novo-nome', nome);
+  await page.click('button:has-text("Criar Usuário")');
+
+  await expect(page.locator(`text=${nome}`).first()).toBeVisible({ timeout: 25000 });
+  console.log('USUARIOS: conta criada');
+
+  page.once('dialog', (d) => d.accept());
+  const linha = page.locator(`div.divide-y > div:has-text("${nome}")`).first();
+  await linha.locator('button:has-text("Excluir")').click();
+  await expect(page.locator(`text=${nome}`)).toHaveCount(0, { timeout: 25000 });
+  console.log('USUARIOS: conta excluida');
+});

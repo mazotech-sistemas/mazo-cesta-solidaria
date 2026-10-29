@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { clienteServico, listarBackups, salvarBackup } from '@/lib/backup/armazenamento';
 
-// Gera um backup em JSON das 5 tabelas de dados e lista os mais recentes
-// já feitos. Admins podem baixar; usuários comuns só veem a lista.
+// Gera um backup em JSON das 5 tabelas de dados e lista os mais recentes.
+// Admins podem baixar; usuários comuns só veem a lista.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const querBaixar = searchParams.get('baixar') === '1';
@@ -42,24 +43,15 @@ export async function GET(req: NextRequest) {
       config: config.data ?? [],
     };
 
-    const totalLinhas =
-      conteudo.produtos.length +
-      conteudo.compras.length +
-      conteudo.precos_historico.length +
-      conteudo.regions.length +
-      conteudo.config.length;
-
-    // Registra na tabela backup_registros (criada na migração 002) para a
-    // tela de usuários mostrar os últimos gerados.
-    try {
-      await supabase.from('backup_registros').insert({
-        criado_em: conteudo.gerado_em,
-        autor: user.email,
-        linhas: totalLinhas,
-        conteudo: conteudo,
-      });
-    } catch {
-      // Não bloqueia o download se a tabela não existir ainda
+    // Guarda uma cópia no Storage para a tela de Usuários listar. Se a service
+    // role não estiver configurada, o download continua funcionando.
+    const admin = clienteServico();
+    if (admin) {
+      try {
+        await salvarBackup(admin, conteudo, user.email ?? user.id);
+      } catch (err) {
+        console.error('Falha ao guardar backup no Storage:', err);
+      }
     }
 
     return new NextResponse(JSON.stringify(conteudo, null, 2), {
@@ -72,13 +64,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Sem ?baixar=1: lista os 10 backups mais recentes (leitura livre para
-  // usuários autenticados; o campo conteúdo fica de fora para não pesar).
-  const { data: registros } = await supabase
-    .from('backup_registros')
-    .select('id, criado_em, linhas, autor')
-    .order('criado_em', { ascending: false })
-    .limit(10);
-
-  return NextResponse.json({ backups: registros ?? [] });
+  const backups = await listarBackups(10);
+  return NextResponse.json({ backups });
 }

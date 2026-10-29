@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { listarBackups } from '@/lib/backup/armazenamento';
 import UsuariosClient from '@/components/usuarios/usuarios-client';
 
 export default async function UsuariosPage() {
@@ -20,13 +21,9 @@ export default async function UsuariosPage() {
     .select('*')
     .order('criado_em', { ascending: false });
 
-  // Últimos backups registrados (falha silenciosamente se a tabela 002
-  // ainda não foi aplicada neste projeto).
-  const { data: backups } = await supabase
-    .from('backup_registros')
-    .select('id, criado_em, linhas, autor')
-    .order('criado_em', { ascending: false })
-    .limit(5);
+  // Últimos backups guardados no Storage (bucket `backups`). Sem tabela e sem
+  // migração; se a service role não estiver no ambiente, a lista vem vazia.
+  const backups = await listarBackups(5);
 
   return (
     <div className="space-y-6">
