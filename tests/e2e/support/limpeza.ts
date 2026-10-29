@@ -49,8 +49,10 @@ async function clienteAdmin(): Promise<SupabaseClient> {
 }
 
 /**
- * Soft delete igual ao usado pela tela de estoque (update ativo = false).
- * Remove pelo nome exato, que os specs geram com marcador unico por execucao.
+ * Apaga de verdade os produtos criados pela execucao. A policy "Admins podem deletar produtos"
+ * libera o delete para admin autenticado e o nome exato (com marcador por execucao) evita
+ * apagar produto de terceiro. Nao filtra por ativo: produto que o teste excluiu pela tela de
+ * estoque ficou com ativo = false e tambem precisa sair da tabela.
  */
 export async function excluirProdutosDeTeste(nomes: string[]): Promise<number> {
   const alvos = [...new Set(nomes.filter(Boolean))];
@@ -58,9 +60,8 @@ export async function excluirProdutosDeTeste(nomes: string[]): Promise<number> {
   const supabase = await clienteAdmin();
   const { error, count } = await supabase
     .from('produtos')
-    .update({ ativo: false }, { count: 'exact' })
-    .in('nome', alvos)
-    .eq('ativo', true);
+    .delete({ count: 'exact' })
+    .in('nome', alvos);
   if (error) throw new Error('Falha ao excluir produtos de teste: ' + error.message);
   return count ?? 0;
 }

@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import path from 'node:path';
 import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
+import { excluirComprasPorProduto, filtrarHistoricoPorProduto } from './support/historico';
 
 /**
  * Verificacao dos pontos corrigidos nas ultimas rodadas, rodando contra producao.
@@ -205,7 +206,7 @@ test('estoque: excluir pede confirmacao com nome, foca Cancelar e remove da list
 
   await page.reload();
   await expect(page.locator(`table tr:has-text("${nome}")`)).toHaveCount(0);
-  criados = [];
+  // a tela faz soft delete (ativo = false): mantem o nome em criados para o afterEach apagar a linha
 });
 
 test('foco e placeholder: contraste medido no navegador', async ({ page }) => {
@@ -502,13 +503,11 @@ test('regressao: criar, editar, simular, salvar compra, historico, CSV, usuarios
   await page.click('button:has-text("Salvar Compra")');
   await expect(page.locator('text=Compra salva com sucesso').first()).toBeVisible({ timeout: 15000 });
 
-  // historico mostra a compra (o nome do produto aparece ao expandir a linha)
-  await irPara(page, '/historico');
-  await page.waitForTimeout(2000);
-  const linhas = page.locator('div.panel.overflow-hidden.divide-y > div');
-  const primeira = linhas.first();
-  await primeira.locator('button[aria-label="Expandir detalhes"]').click();
-  await expect(primeira.locator(`text=${nome}`)).toBeVisible();
+  // historico mostra a compra (o nome do produto aparece ao expandir a linha).
+  // Filtra pelo nome do produto para nao depender de "a primeira linha" ser a compra desta execucao.
+  const linhaCompra = await filtrarHistoricoPorProduto(page, nome);
+  await linhaCompra.locator('button[aria-label="Expandir detalhes"]').click();
+  await expect(linhaCompra.locator(`text=${nome}`).first()).toBeVisible();
   console.log('REGRESSAO historico: compra encontrada e expandida com o produto');
 
   // usuarios e configuracoes em leitura
@@ -520,23 +519,14 @@ test('regressao: criar, editar, simular, salvar compra, historico, CSV, usuarios
   await expect(page.locator('#tenda-region-id')).toBeVisible();
 
   // limpar a compra criada (exclusao existe na propria tela de historico)
-  await irPara(page, '/historico');
-  await page.waitForTimeout(2000);
-  const linhaCompra = page.locator('div.panel.overflow-hidden.divide-y > div').first();
-  await linhaCompra.locator('button[aria-label="Expandir detalhes"]').click();
-  await expect(linhaCompra.locator(`text=${nome}`)).toBeVisible();
-  page.once('dialog', (d) => d.accept());
-  await linhaCompra.locator('button:has-text("Excluir")').click();
-  await page.waitForTimeout(2500);
-  await expect(page.locator(`text=${nome}`)).toHaveCount(0);
-  console.log('REGRESSAO historico: compra de teste removida');
+  const comprasRemovidas = await excluirComprasPorProduto(page, nome);
+  console.log(`REGRESSAO historico: ${comprasRemovidas} compra(s) de teste removida(s)`);
 
-  // limpar o produto pela tela
+  // limpar o produto pela tela (a tela faz soft delete: o nome fica em criados para o afterEach apagar de verdade)
   await irPara(page, '/estoque');
   await page.locator(`button[aria-label="Excluir ${nome}"]`).click();
   await page.locator('[data-testid="confirmar-exclusao"]').click();
   await expect(page.locator(`table tr:has-text("${nome}")`)).toHaveCount(0);
-  criados = [];
 });
 
 test('usuarios: cria e exclui conta pela tela', async ({ page }) => {

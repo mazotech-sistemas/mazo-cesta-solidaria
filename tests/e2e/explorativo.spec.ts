@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
+import { excluirComprasPorProduto } from './support/historico';
 
 const BASE = 'https://mazotech-cesta-solidaria.vercel.app';
 const RUN = marcadorExecucao();
@@ -316,12 +317,17 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
   test('salvar compra funciona', async ({ page }) => {
     await login(page);
-    await criarProduto(page, `Produto E2E-${RUN}-compra`);
+    const nome = `Produto E2E-${RUN}-compra`;
+    await criarProduto(page, nome);
     await irPara(page, '/simulador');
     await page.waitForTimeout(2000);
 
-    // Selecionar um produto
-    await page.locator('input[type="checkbox"]').first().check();
+    // Seleciona o produto desta execucao: a compra fica identificavel pelo nome no historico
+    const rotuloProduto = page.locator('label', { hasText: nome }).first();
+    await expect(rotuloProduto).toBeVisible();
+    const idCaixa = await rotuloProduto.getAttribute('for');
+    expect(idCaixa).toBeTruthy();
+    await page.locator(`input#${idCaixa}`).check();
 
     // Mudar numero de cestas
     await page.fill('#num-cestas', '2');
@@ -332,6 +338,10 @@ test.describe('04 - Simulador (Full Flow)', () => {
 
     // Verificar mensagem de sucesso - usar first() para evitar strict mode violation
     await expect(page.locator('text=Compra salva com sucesso').first()).toBeVisible();
+
+    // Remover a compra criada pela tela de historico, senao ela fica na base de producao
+    const removidas = await excluirComprasPorProduto(page, nome);
+    console.log(`COMPRA removida: ${removidas} compra(s) do produto ${nome}`);
   });
 
   test('simulador sem produtos mostra estado vazio', async ({ page }) => {
@@ -366,14 +376,19 @@ test.describe('05 - Historico (Full Flow)', () => {
     await login(page);
     await page.goto('/historico');
 
-    // Se tem compras, verificar que aparecem
-    const hasPurchases = await page.locator('text=Nenhuma compra encontrada').isVisible().catch(() => false);
-    if (!hasPurchases) {
-      // Tem compras, verificar estrutura
-      await expect(page.locator('text=/cesta/').first()).toBeVisible();
-    } else {
-      // Sem compras, verificar link para simulador
+    // A lista e renderizada no cliente (dynamic com ssr:false): espera um dos dois estados.
+    // Checar isVisible() logo apos o goto dava falso negativo e caia no ramo errado.
+    const vazio = page.locator('h3:has-text("Nenhuma compra encontrada")');
+    const linhas = page.locator('div.panel.overflow-hidden.divide-y > div');
+
+    await expect(vazio.or(linhas.first())).toBeVisible({ timeout: 20000 });
+
+    if (await vazio.isVisible()) {
+      // Base sem compra: a tela oferece o caminho para criar a primeira
       await expect(page.locator('text=Ir para Simulador')).toBeVisible();
+    } else {
+      // Com compras: a linha mostra a estrutura (cestas, itens, total)
+      await expect(linhas.first()).toContainText(/cesta/);
     }
   });
 
@@ -521,7 +536,8 @@ test.describe('09 - Integracao End-to-End: Criar Produto -> Simular -> Ver no Hi
     await login(page);
 
     // 1. Criar produto
-    await criarProduto(page, `Produto E2E-${RUN}-fluxo`);
+    const nome = `Produto E2E-${RUN}-fluxo`;
+    await criarProduto(page, nome);
 
     // 2. Ir para simulador e criar compra
     let retries = 3;
@@ -538,30 +554,24 @@ test.describe('09 - Integracao End-to-End: Criar Produto -> Simular -> Ver no Hi
     await page.waitForTimeout(3000);
 
     // Buscar e selecionar o produto criado
-    const checkboxes = page.locator('input[type="checkbox"]');
-    const count = await checkboxes.count();
-    if (count === 0) {
-      console.log('Skip: sem produtos no simulador');
+    const rotuloProduto = page.locator('label', { hasText: nome }).first();
+    if (!(await rotuloProduto.isVisible().catch(() => false))) {
+      console.log('Skip: produto da execucao nao apareceu no simulador');
       return;
     }
 
-    await checkboxes.first().check();
+    const idCaixa = await rotuloProduto.getAttribute('for');
+    expect(idCaixa).toBeTruthy();
+    await page.locator(`input#${idCaixa}`).check();
     await page.fill('#num-cestas', '1');
     await page.click('button:has-text("Salvar Compra")');
     await page.waitForTimeout(3000);
 
     await expect(page.locator('text=Compra salva com sucesso').first()).toBeVisible();
 
-    // 3. Verificar no historico
-    await page.goto('/historico');
-    await page.waitForTimeout(2000);
-
-    // Deveria ter pelo menos 1 compra
-    const noPurchases = await page.locator('text=Nenhuma compra encontrada').isVisible().catch(() => false);
-    if (!noPurchases) {
-      // Tem compras - verificar que a pagina exibe dados
-      await expect(page.locator('text=/compras/').first()).toBeVisible();
-    }
+    // 3. Verificar no historico e remover a compra criada
+    const removidas = await excluirComprasPorProduto(page, nome);
+    console.log(`FLUXO historico: compra do produto ${nome} encontrada e ${removidas} removida(s)`);
   });
 });
 
