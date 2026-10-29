@@ -284,7 +284,7 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
         <section className="panel overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--line)]">
             <h3 className="text-[16px] font-extrabold tracking-[-0.02em] text-navy">Configurações do Scraper</h3>
-            <p className="text-[12.5px] text-steel mt-0.5">Região de coleta e janela de validade do preço</p>
+            <p className="text-[12.5px] text-steel mt-0.5">Rótulo de catálogo e janela de validade do preço</p>
           </div>
           <div className="p-5">
             <form onSubmit={handleSaveConfig} className="grid gap-4 sm:grid-cols-2">
@@ -297,7 +297,9 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
                   onChange={(e) => setTendaRegionId(e.target.value)}
                   placeholder="Ex: 000010"
                 />
-                <p className="text-[11.5px] text-steel mt-1.5">Identificador da região para o scraper de preços</p>
+                <p className="text-[11.5px] text-steel mt-1.5">
+                  Região Tenda (referência de catálogo; o preço lido é o do site)
+                </p>
               </div>
               <div>
                 <Label htmlFor="preco-stale-dias">Dias para considerar preço desatualizado</Label>

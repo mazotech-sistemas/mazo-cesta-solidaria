@@ -260,8 +260,15 @@ describe('SimuladorClient', () => {
 
     it('exibe estado vazio quando nenhum produto', () => {
       renderWithToast(<SimuladorClient produtos={[]} userId={mockUserId} />);
-      expect(screen.getByText(/Nenhum produto/i)).toBeInTheDocument();
+      // Textos reais do bloco vazio do simulador
+      expect(screen.getByText('Nenhum produto disponível')).toBeInTheDocument();
+      expect(
+        screen.getByText('Cadastre produtos no estoque para começar a simular')
+      ).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /ver estoque/i })).toBeInTheDocument();
+      // Sem produto não há o que marcar nem o que salvar
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+      expect(screen.queryByRole('button', { name: /Salvar Compra/i })).not.toBeInTheDocument();
     });
 
     it('não exibe "O que falta comprar" quando estoque cobre', () => {

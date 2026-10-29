@@ -343,22 +343,6 @@ test.describe('04 - Simulador (Full Flow)', () => {
     const removidas = await excluirComprasPorProduto(page, nome);
     console.log(`COMPRA removida: ${removidas} compra(s) do produto ${nome}`);
   });
-
-  test('simulador sem produtos mostra estado vazio', async ({ page }) => {
-    await login(page);
-    await page.goto('/simulador');
-    await page.waitForTimeout(2000);
-
-    // Estado vazio so faz sentido com a base sem produto ativo: limpa o que existir da execucao
-    const produtosCount = await page.locator('input[type="checkbox"]').count();
-    if (produtosCount > 0) {
-      console.log(`Skip: base com ${produtosCount} produto(s) ativo(s), estado vazio nao se aplica`);
-      return;
-    }
-
-    await expect(page.locator('text=Nenhum produto disponível')).toBeVisible();
-    await expect(page.locator('text=Ver Estoque')).toBeVisible();
-  });
 });
 
 test.describe('05 - Historico (Full Flow)', () => {

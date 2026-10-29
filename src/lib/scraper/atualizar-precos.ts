@@ -66,7 +66,14 @@ async function lerPrecoDaPagina(url: string): Promise<number | null> {
   return extrairPrecoDoHtml(await resposta.text());
 }
 
-async function lerRegionId(supabase: SupabaseClient): Promise<string> {
+// `tenda_region_id` é rótulo de catálogo, não parâmetro de preço. O site não
+// aceita filial por query string, cookie nem header: o `props.pageProps.branchId`
+// vem nulo e o `product.price` é o mesmo em qualquer filial (a filial só muda
+// estoque, em `product.inventory[].branchId`). A seleção de loja do site vive no
+// cookie `_Tendaatacado-branchID`, escrito pelo navegador, e o servidor ignora.
+// O valor fica gravado em `precos_historico.region_id` porque a coluna é FK de
+// `regions` e serve para agrupar a série.
+async function lerRegiaoDoCatalogo(supabase: SupabaseClient): Promise<string> {
   const { data } = await supabase
     .from('config')
     .select('valor')
@@ -87,8 +94,18 @@ function precoMudou(anterior: number | string | null, atual: number): boolean {
   return Math.abs(numero - atual) >= 0.005;
 }
 
-function diaDeHoje(): string {
-  return new Date().toISOString().slice(0, 10);
+// A série diária de `precos_historico` é do dia de Brasília, não do dia UTC.
+// Com `toISOString()` o registro das 21h às 0h caía no dia seguinte e a série
+// ganhava um dia extra (ou perdia, na volta).
+const FORMATADOR_DIA_SAO_PAULO = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Sao_Paulo',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+export function diaEmSaoPaulo(data: Date = new Date()): string {
+  return FORMATADOR_DIA_SAO_PAULO.format(data);
 }
 
 export async function atualizarPrecosDosProdutos(
@@ -109,8 +126,8 @@ export async function atualizarPrecosDosProdutos(
   }
   if (comEndereco.length === 0) return resultado;
 
-  const regionId = await lerRegionId(supabase);
-  const dia = diaDeHoje();
+  const regionId = await lerRegiaoDoCatalogo(supabase);
+  const dia = diaEmSaoPaulo();
 
   const anotarErro = (identificador: string, motivo: string) => {
     resultado.erros.total += 1;
@@ -146,7 +163,8 @@ export async function atualizarPrecosDosProdutos(
     const precoFinal = arredondarPreco(preco);
 
     // O histórico guarda um registro por produto e por dia, com ou sem mudança
-    // de preço. Sem isso a série diária fica com buraco.
+    // de preço. Sem isso a série diária fica com buraco. O `region_id` vem da
+    // config e é rótulo de catálogo: o preço é sempre o do site, sem filial.
     const { error: erroHistorico } = await supabase.from('precos_historico').upsert(
       { produto_id: produto.id, dia, preco: precoFinal, region_id: regionId },
       { onConflict: 'produto_id,dia' },
@@ -173,7 +191,8 @@ export async function atualizarPrecosDosProdutos(
 
   console.log(
     `Tenda: ${resultado.produtos_verificados} verificados, ${resultado.atualizados} atualizados, ` +
-      `${resultado.sem_preco} sem preço, ${resultado.erros.total} erros (região ${regionId})`,
+      `${resultado.sem_preco} sem preço, ${resultado.erros.total} erros ` +
+      `(rótulo de catálogo ${regionId}; o preço lido é o do site, sem filial)`,
   );
   return resultado;
 }

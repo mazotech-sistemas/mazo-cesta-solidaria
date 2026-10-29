@@ -4,6 +4,18 @@
 // ar (responde 404 desde outubro de 2026) e o `TENDA_BEARER_TOKEN` não abre mais
 // nada. O preço que o site mostra vem no JSON do `<script id="__NEXT_DATA__">` de
 // cada página de produto, então é de lá que a gente lê.
+//
+// Limitação conhecida: não existe seleção de filial estável no lado do servidor.
+// Testado em outubro de 2026 na página de produto e na API pública
+// (`/api/public/store/product/<token>`): query string (`?branchId=`, `?filial=`,
+// `?branch=`, `?regionId=`), cookie (`_Tendaatacado-branchID`, `branchId`,
+// `filial`) e header (`x-branch-id`, `branchId`, `filial`) não mudam nada.
+// `props.pageProps.branchId` vem `null` e `product.price` é o mesmo em toda
+// filial; o que varia por filial é só o estoque (`product.inventory[].branchId`).
+// O site guarda a loja escolhida no cookie `_Tendaatacado-branchID`, escrito pelo
+// navegador, e o render do servidor não lê esse cookie. Por isso o preço lido é
+// sempre o do site, sem filial: `config.tenda_region_id` é referência de
+// catálogo (rótulo em `precos_historico.region_id`), não parâmetro de preço.
 
 const BASE_PRODUTO = 'https://www.tendaatacado.com.br/produto/';
 const BASE_BUSCA = 'https://www.tendaatacado.com.br/busca?q=';
