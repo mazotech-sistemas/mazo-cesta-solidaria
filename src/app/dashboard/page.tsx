@@ -5,6 +5,17 @@ import QuickActions from '@/components/dashboard/quick-actions';
 import Alerts from '@/components/dashboard/alerts';
 import RecentPurchases from '@/components/dashboard/recent-purchases';
 
+// `gte` usa a virada do mês no fuso de Brasília, não a do servidor.
+const diaBrasilia = () =>
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+const anoMesBrasilia = () => diaBrasilia().slice(0, 7);
+const inicioDoMesBrasilia = `${anoMesBrasilia()}-01T00:00:00.000-03:00`;
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -37,7 +48,7 @@ export default async function DashboardPage() {
       .lt('ultima_atualizacao_preco', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('compras').select('*', { count: 'exact', head: true })
       .eq('criado_por', user.id)
-      .gte('criado_em', new Date(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0, 0).toISOString()),
+      .gte('criado_em', inicioDoMesBrasilia),
     supabase.from('produtos').select('id').eq('ativo', true).is('token_tenda', null),
     supabase.from('config').select('chave, valor'),
   ]);

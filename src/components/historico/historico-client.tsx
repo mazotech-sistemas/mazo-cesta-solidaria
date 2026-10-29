@@ -37,6 +37,23 @@ interface CompraExpandida {
   }>;
 }
 
+interface ItemCompra {
+  nome?: string;
+  preco_unitario?: number;
+  preco?: number;
+  quantidade?: number;
+  subtotal?: number;
+}
+
+function itensDe(c: Compra): ItemCompra[] {
+  const bruto = c.itens;
+  if (!Array.isArray(bruto)) return [];
+  // `Json` do Supabase é recursivo e não recebe index signature, então
+  // separamos a filtragem (que devolve `Json`) do cast local para `ItemCompra`.
+  const objetos = bruto.filter((i) => i !== null && typeof i === 'object' && !Array.isArray(i));
+  return objetos as unknown as ItemCompra[];
+}
+
 const FUSO = 'America/Sao_Paulo';
 
 function formatarDia(valor: string) {
@@ -202,7 +219,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
         if (filterDateEnd && c.criado_em > filterDateEnd + 'T23:59:59') return false;
         if (search) {
           const s = search.toLowerCase();
-          const itens: any[] = Array.isArray(c.itens) ? c.itens : [];
+          const itens = itensDe(c);
           const itensMatch = itens.some(i => i.nome?.toLowerCase().includes(s));
           const perfil = c.profiles?.nome?.toLowerCase().includes(s);
           if (!itensMatch && !perfil) return false;
@@ -210,7 +227,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
         return true;
       })
       .map(c => {
-        const itens: any[] = Array.isArray(c.itens) ? c.itens : [];
+        const itens = itensDe(c);
         const valorFamilia =
           c.numero_cestas > 0 ? c.total / c.numero_cestas : 0;
         return {

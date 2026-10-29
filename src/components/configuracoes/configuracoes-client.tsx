@@ -63,7 +63,7 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
         return;
       }
 
-      const msg = `${ data.precosAtualizados } preço(s) atualizado(s) de ${ data.produtos_verificados } produto(s) verificado(s)`;
+      const msg = `${data.atualizados} preço(s) atualizado(s) de ${data.produtos_verificados} produto(s) verificado(s)`;
       setScraperResultado(msg);
       toast('Scraper executado com sucesso', 'success');
     } catch (err) {

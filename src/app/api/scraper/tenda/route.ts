@@ -12,7 +12,15 @@ export const maxDuration = 60;
 export async function GET(request: Request): Promise<Response> {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // Se o segredo estiver configurado, ele é obrigatório. Se não estiver, a
+  // rota responde 503 em vez de ficar aberta para chamadas anônimas.
+  if (!cronSecret) {
+    return NextResponse.json(
+      { error: 'CRON_SECRET não configurado' },
+      { status: 503 },
+    );
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
