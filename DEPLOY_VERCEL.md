@@ -38,8 +38,7 @@ No **Dashboard Vercel > Settings > Environment Variables**, adicione **todas** p
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxx.supabase.co` | Supabase Dashboard > Settings > API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API |
 | `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIs...` | Supabase Dashboard > Settings > API (service_role, **não** anon) |
-| `TENDA_BEARER_TOKEN` | `seu-token-tenda` | Tenda Atacado (API) |
-| `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` (não lida pelo código hoje; a oferta de backup semanal ainda não está implementada) |
+| `BACKUP_KEY` | `chave-32-chars-aleatoria` | `openssl rand -hex 32` (não lida pelo código hoje; o backup semanal usa `CRON_SECRET` e grava no Storage do Supabase) |
 | `CRON_SECRET` | `segredo-para-cron` | `openssl rand -hex 32` |
 
 > ⚠️ **NUNCA** commite `.env` - use só o dashboard do Vercel.
@@ -161,7 +160,7 @@ npm run build && npm test
 | `Module not found: @supabase/ssr` | `npm install` rodou? `package-lock.json` commitado? |
 | `JWT_SECRET placeholder` | `SUPABASE_SERVICE_ROLE_KEY` está correto? (service_role, não anon) |
 | Cron não roda | `CRON_SECRET` definido? Header `Authorization: Bearer ...` no vercel.json? |
-| Preços não atualizam | `TENDA_BEARER_TOKEN` válido? Região `tenda_region_id` existe em `config`? |
+| Preços não atualizam | `token_tenda` do produto está preenchido? Região `tenda_region_id` existe em `config` e em `regions`? O log da rota mostra quantos ficaram sem preço e quais tokens falharam. |
 | Redirect loop login | `NEXT_PUBLIC_SUPABASE_URL` aponta pro projeto certo? Site URL no Supabase bate com Vercel? |
 
 ---

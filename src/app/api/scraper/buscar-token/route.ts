@@ -1,84 +1,71 @@
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import {
+  extrairProdutoDaBusca,
+  urlDaBusca,
+  USER_AGENT_NAVEGADOR,
+} from '@/lib/scraper/tenda';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const tendaBearerToken = process.env.TENDA_BEARER_TOKEN!;
+// Preenche o token do produto no cadastro do estoque. Antes consultava a API
+// `api.tendaatacado.com.br`, que responde 404; agora lê a página de busca, onde
+// cada produto vem com token, nome, marca e preço. Exige sessão: sem isso a rota
+// virava proxy aberto para qualquer um mandar o servidor consultar a Tenda.
+export const maxDuration = 30;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
-
-interface TendaSearchResult {
-  products: Array<{
-    id: string;
-    name: string;
-    price: number;
-    brand?: string;
-    unit?: string;
-  }>;
-}
-
-async function buscarTenda(termo: string, regionId: string): Promise<TendaSearchResult | null> {
-  const url = `https://api.tendaatacado.com.br/v1/products/search?q=${encodeURIComponent(termo)}&region=${regionId}&limit=5`;
-  const res = await fetch(url, {
+async function buscarNaPaginaDeBusca(termo: string) {
+  const resposta = await fetch(urlDaBusca(termo), {
     headers: {
-      'Authorization': `Bearer ${tendaBearerToken}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      'User-Agent': USER_AGENT_NAVEGADOR,
+      Accept: 'text/html,application/xhtml+xml',
+      'Accept-Language': 'pt-BR,pt;q=0.9',
     },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(15_000),
   });
-
-  if (!res.ok) return null;
-  return res.json();
+  if (!resposta.ok) return null;
+  return extrairProdutoDaBusca(await resposta.text());
 }
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const { termo_busca, region_id } = await request.json();
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!termo_busca) {
-      return new Response(JSON.stringify({ error: 'termo_busca é obrigatório' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!user) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const { data: config } = await supabase
-      .from('config')
-      .select('valor')
-      .eq('chave', 'tenda_region_id')
-      .single();
+    const { termo_busca } = await request.json();
+    const termo = typeof termo_busca === 'string' ? termo_busca.trim() : '';
 
-    const regionId = region_id || config?.valor || '000010';
-    const data = await buscarTenda(termo_busca, regionId);
-
-    if (!data || !data.products || data.products.length === 0) {
-      return new Response(JSON.stringify({ error: 'Nenhum produto encontrado na Tenda', token: null }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!termo) {
+      return NextResponse.json({ error: 'termo_busca é obrigatório' }, { status: 400 });
     }
 
-    const primeiro = data.products[0];
+    const encontrado = await buscarNaPaginaDeBusca(termo);
+    if (!encontrado) {
+      return NextResponse.json(
+        { error: 'Nenhum produto encontrado na Tenda', token: null },
+        { status: 404 },
+      );
+    }
 
-    return new Response(JSON.stringify({
-      token: primeiro.id,
-      nome: primeiro.name,
-      preço: primeiro.price,
-      marca: primeiro.brand || null,
-      unidade: primeiro.unit || null,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+    return NextResponse.json({
+      token: encontrado.token,
+      nome: encontrado.nome,
+      preco: encontrado.preco,
+      marca: encontrado.marca,
     });
-  } catch (err) {
-    console.error('Erro ao buscar token:', err);
-    return new Response(JSON.stringify({
-      error: 'Erro interno',
-      message: err instanceof Error ? err.message : 'Erro desconhecido',
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  } catch (erro) {
+    console.error('Erro ao buscar token:', erro);
+    return NextResponse.json(
+      {
+        error: 'Erro interno',
+        message: erro instanceof Error ? erro.message : 'Erro desconhecido',
+      },
+      { status: 500 },
+    );
   }
 }
