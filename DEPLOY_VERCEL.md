@@ -159,7 +159,7 @@ npm run build && npm test
 | `Module not found: @supabase/ssr` | `npm install` rodou? `package-lock.json` commitado? |
 | `JWT_SECRET placeholder` | `SUPABASE_SERVICE_ROLE_KEY` está correto? (service_role, não anon) |
 | Cron não roda | `CRON_SECRET` definido? Header `Authorization: Bearer ...` no vercel.json? |
-| Preços não atualizam | `token_tenda` do produto está preenchido? Região `tenda_region_id` existe em `config` e em `regions`? O log da rota mostra quantos ficaram sem preço e quais tokens falharam. |
+| Preços não atualizam | `termo_busca` do produto está preenchido? O tamanho do filtro sai do próprio termo (ex.: `arroz tipo 1 5kg` aceita de 4 a 6 kg). Região `tenda_region_id` existe em `config` e em `regions`? O log da rota mostra quantos ficaram sem preço, sem tamanho e quais identificadores falharam. |
 | Redirect loop login | `NEXT_PUBLIC_SUPABASE_URL` aponta pro projeto certo? Site URL no Supabase bate com Vercel? |
 
 ---

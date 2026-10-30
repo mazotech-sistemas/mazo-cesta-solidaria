@@ -16,6 +16,7 @@ import {
   cestasPossiveisOrcamento,
   faltandoComprar,
 } from '@/lib/planner';
+import { gerarPdfListaCompras } from '@/lib/lista-compras';
 
 interface ItemSelecionado {
   produto_id: number;
@@ -28,52 +29,6 @@ interface ItemSelecionado {
 interface SimuladorClientProps {
   produtos: Produto[];
   userId: string;
-}
-
-interface FaltanteParaPdf {
-  produto: {
-    nome: string;
-    unidade?: string | null;
-    estoque_atual: number;
-    qtd_por_cesta: number;
-  };
-  faltando: number;
-  custo_reposicao: number;
-}
-
-function gerarPdfListaCompras(
-  faltantes: FaltanteParaPdf[],
-  total: number,
-  dataPreco: string
-): string {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const linhas = faltantes
-    .map((f) => {
-      const nome = `${f.produto.nome} ${f.produto.unidade || ''}`.trim();
-      return `<tr><td>${esc(nome)}</td><td class="num">${f.produto.estoque_atual}</td><td class="num">${f.faltando}</td><td class="num">${f.custo_reposicao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`;
-    })
-    .join('');
-  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Lista de Compras - Cesta Solidaria</title><style>
-    body { font-family: Inter, Arial, sans-serif; color: #052049; padding: 24px; }
-    h1 { font-size: 18px; margin: 0 0 4px; }
-    .meta { font-size: 11px; color: #4573A7; margin-bottom: 16px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { border: 1px solid rgba(2,29,68,.14); padding: 8px 10px; text-align: left; }
-    th { background: #021D44; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
-    .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .total { margin-top: 12px; font-size: 14px; font-weight: 700; }
-    @media print { .no-print { display: none; } }
-  </style></head><body>
-    <h1>Lista de Compras - Cesta Solidária</h1>
-    <p class="meta">Preços atualizados em: ${esc(dataPreco)} &middot; ${faltantes.length} produto(s)</p>
-    <button class="no-print" onclick="window.print()" style="margin-bottom:12px;padding:8px 16px;background:#0052FA;color:#fff;border:none;border-radius:20px;font-weight:600">Imprimir / Salvar PDF</button>
-    <table>
-      <thead><tr><th>Produto</th><th class="num">Estoque</th><th class="num">Comprar</th><th class="num">Custo</th></tr></thead>
-      <tbody>${linhas || '<tr><td colspan="4">Nada para comprar: estoque cobre a meta.</td></tr>'}</tbody>
-    </table>
-    <p class="total">TOTAL DA COMPRA: R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-  </body></html>`;
-  return html;
 }
 
 export default function SimuladorClient({ produtos, userId }: SimuladorClientProps) {
@@ -191,15 +146,28 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
     ? produtos.filter(p => p.nome.toLowerCase().includes(termo) || (p.marca || '').toLowerCase().includes(termo))
     : produtos;
 
-  const dataPreco = new Date().toLocaleDateString('pt-BR');
+  // A data impressa é a do preço mais recente que está no estoque. Usar a
+  // data de hoje mentiria quando o scraper não roda há dias.
+  const dataPreco = useMemo(() => {
+    const maisRecente = produtos.reduce<string | null>((acc, p) => {
+      if (!p.ultima_atualizacao_preco) return acc;
+      if (!acc) return p.ultima_atualizacao_preco;
+      return new Date(p.ultima_atualizacao_preco) > new Date(acc) ? p.ultima_atualizacao_preco : acc;
+    }, null);
+    return maisRecente ? new Date(maisRecente).toLocaleDateString('pt-BR') : null;
+  }, [produtos]);
 
   const handleBaixarPdf = () => {
-    const html = gerarPdfListaCompras(faltantes, totalFaltantes, dataPreco);
+    const html = gerarPdfListaCompras(faltantes, {
+      total: totalFaltantes,
+      cestas: numeroCestas,
+      dataPreco,
+    });
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `lista_compras_${dataPreco.replace(/\//g, '-')}.html`;
+    a.download = `lista_compras_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

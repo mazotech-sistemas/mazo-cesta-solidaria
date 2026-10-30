@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extrairPrecoDoHtml, extrairProdutoDaBusca, urlDoProduto } from './tenda';
+import {
+  extrairPrecoDoHtml,
+  extrairProdutoDaBusca,
+  extrairTamanhoTexto,
+  urlDoProduto,
+} from './tenda';
 
 const pagina = (pageProps: unknown) =>
   `<html><head><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
@@ -116,5 +121,22 @@ describe('extrairProdutoDaBusca', () => {
   it('devolve null quando a busca não achou nada', () => {
     expect(extrairProdutoDaBusca(pagina({ searchTerm: 'xyz', notFound: true }))).toBeNull();
     expect(extrairProdutoDaBusca('<html></html>')).toBeNull();
+  });
+});
+
+describe('extrairTamanhoTexto', () => {
+  it('devolve a embalagem como a Tenda escreve no nome', () => {
+    expect(extrairTamanhoTexto('Arroz Tipo 1 Camil 5kg')).toBe('5kg');
+    expect(extrairTamanhoTexto('Óleo de Soja Liza 900ml')).toBe('900ml');
+    expect(extrairTamanhoTexto('Leite Condensado Moça 395g')).toBe('395g');
+  });
+
+  it('junta número e unidade quando o nome traz espaço', () => {
+    expect(extrairTamanhoTexto('Arroz Tipo 1 Camil 5 kg')).toBe('5kg');
+  });
+
+  it('devolve null quando o nome não traz tamanho', () => {
+    expect(extrairTamanhoTexto('Miojo Carne')).toBeNull();
+    expect(extrairTamanhoTexto('')).toBeNull();
   });
 });

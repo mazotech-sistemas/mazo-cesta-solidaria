@@ -28,6 +28,16 @@ function precoDesatualizado(produto: Produto, dias: number): boolean {
   return ultimo < limite;
 }
 
+/**
+ * Marca e tamanho do produto que o scraper escolheu na Tenda. Vai na linha
+ * secundária da tabela: sem isso a pessoa não sabe qual pacote pegar.
+ */
+function referenciaDoProduto(produto: Produto): string {
+  const marca = produto.marca?.trim() || '-';
+  const unidade = produto.unidade?.trim();
+  return unidade ? `${marca} · ${unidade}` : marca;
+}
+
 interface NovoProduto {
   nome: string;
   marca: string;
@@ -158,14 +168,14 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
   // Fundos opacos porque a célula presa passa por cima do conteúdo: o hover é
   // ice/40 achatado sobre paper (#F8F8F8) e o cabeçalho é ice/70 achatado (#F2F2F2).
   // A coluna de ações fica presa à direita com `sticky right-0`. O
-  // `min-width` maior garante que a tabela sempre transborde em telas estreitas,
-  // forçando o overflow necessário para o sticky colar. 140px cobre os dois
-  // botões (editar + excluir) com padding e garante que o sticky cole.
+  // `min-width` de 140px cobre os dois botões (editar + excluir) com padding
+  // quando a tabela transborda; abaixo de sm ele cai para 104px, que ainda
+  // cabe os dois ícones e deixa a coluna de estoque visível em 375px.
   // `pointer-events-auto` evita que o elementFromPoint falhe por cima de overlays.
   const celulaAcoes =
-    'sticky right-0 z-20 min-w-[140px] whitespace-nowrap bg-paper px-2 align-middle group-hover:bg-[#F8F8F8] pointer-events-auto' + sombraAcoes;
+    'sticky right-0 z-20 min-w-[104px] sm:min-w-[140px] whitespace-nowrap bg-paper px-2 align-middle group-hover:bg-[#F8F8F8] pointer-events-auto' + sombraAcoes;
   const cabecalhoAcoes =
-    'sticky right-0 z-30 min-w-[140px] whitespace-nowrap bg-[#F2F2F2] px-2 text-right' + sombraAcoes;
+    'sticky right-0 z-30 min-w-[104px] sm:min-w-[140px] whitespace-nowrap bg-[#F2F2F2] px-2 text-right' + sombraAcoes;
 
   const handleCriarProduto = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -593,7 +603,6 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
                 <TableHeader>
                   <TableRow>
                     <TableHead>Produto</TableHead>
-                    <TableHead className="hidden md:table-cell">Marca</TableHead>
                     <TableHead align="right">Estoque</TableHead>
                     <TableHead align="right" className="hidden sm:table-cell">Preço Atual</TableHead>
                     <TableHead align="right" className="hidden xl:table-cell">Qtd/Cesta</TableHead>
@@ -607,14 +616,37 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
                   {filtered.map((p) => (
                     <TableRow key={p.id} className="group">
                       <TableCell>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-medium text-navy truncate max-w-[180px] sm:max-w-[260px]" title={p.nome}>{p.nome}</span>
-                          {p.estoque_atual <= 2 && (
-                            <Badge variant="warning">Baixo</Badge>
-                          )}
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                            <span className="font-medium text-navy truncate max-w-[180px] sm:max-w-[260px]" title={p.nome}>{p.nome}</span>
+                            {p.estoque_atual <= 2 && (
+                              <Badge variant="warning">Baixo</Badge>
+                            )}
+                          </div>
+                          {/* O scraper escolhe um produto da Tenda: marca e tamanho
+                              ficam na segunda linha para a pessoa achar o pacote
+                              certo na prateleira. */}
+                          <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                            <span
+                              className="max-w-[180px] truncate text-[12px] leading-snug text-steel-strong sm:max-w-[260px]"
+                              title={referenciaDoProduto(p)}
+                              data-testid={`referencia-produto-${p.id}`}
+                            >
+                              {referenciaDoProduto(p)}
+                            </span>
+                            {p.url_tenda && (
+                              <a
+                                href={p.url_tenda}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="whitespace-nowrap text-[12px] font-medium text-royal underline decoration-royal/30 underline-offset-2 transition-colors hover:decoration-royal focus-visible:decoration-royal"
+                              >
+                                ver na Tenda
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden whitespace-nowrap text-steel text-[13px] md:table-cell">{p.marca || '-'}</TableCell>
                       <TableCell align="right" className="font-medium">
                         <span className={p.estoque_atual <= 2 ? 'text-danger font-bold' : 'text-navy'}>
                           {p.estoque_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}

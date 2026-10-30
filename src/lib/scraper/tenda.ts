@@ -36,6 +36,140 @@ export interface ProdutoDaBuscaTenda {
   marca: string | null;
 }
 
+// Resultado bruto de uma busca: cada item guardou também a url de onde veio,
+// para o painel exibir e conferir. O preço aqui é sempre número: `produtosDaBuscaOrdenados`
+// já descarta o item com preço nulo antes de devolver.
+export interface ResultadoBuscaTenda {
+  token: string;
+  nome: string;
+  preco: number;
+  marca: string | null;
+  url: string;
+  // Peso do produto em kg extraído do nome (ex.: "Arroz 5kg"). `null` quando
+  // não há indicação de peso: não dá para garantir que cabe na faixa pedida.
+  tamanhoKg: number | null;
+  // Texto da embalagem como a Tenda escreve no nome (ex.: "5kg", "900ml",
+  // "395g"). É o que vai para `produtos.unidade` e para a tela, para a pessoa
+  // achar a mercadoria na prateleira.
+  tamanhoTexto: string | null;
+}
+
+// `produtosDaBuscaOrdenados` aceita a faixa de tamanho do produto da cesta:
+// resultados com peso fora dela (ou com peso desconhecido) ficam de fora.
+export interface FaixaDeTamanho {
+  min?: number | null;
+  max?: number | null;
+}
+
+function faixaTemRestricao(faixa?: FaixaDeTamanho | null): boolean {
+  if (!faixa) return false;
+  return (Number(faixa.min) > 0) || (Number(faixa.max) > 0);
+}
+
+function dentroDaFaixa(tamanhoKg: number | null, faixa?: FaixaDeTamanho | null): boolean {
+  if (!faixaTemRestricao(faixa)) return true;
+  if (tamanhoKg === null) return false;
+  const min = Number(faixa?.min) || 0;
+  const max = Number(faixa?.max) || 0;
+  if (min > 0 && tamanhoKg < min) return false;
+  if (max > 0 && tamanhoKg > max) return false;
+  return true;
+}
+
+// A Tenda costuma escrever o peso na descrição; campos separados de
+// especificação nem sempre existem, então o nome é a fonte confiável. O padrão
+// pega número seguido de kg/g/ml/l e serve para os dois usos: o valor em kg do
+// filtro e o texto que aparece na tela.
+const PADRAO_TAMANHO = /(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/;
+
+// Texto da embalagem como veio no nome, sem o espaço entre número e unidade.
+export function extrairTamanhoTexto(nome: string): string | null {
+  const correspondencia = PADRAO_TAMANHO.exec(nome.toLowerCase());
+  if (!correspondencia) return null;
+  return `${correspondencia[1]}${correspondencia[2]}`;
+}
+
+// Peso do produto em kg, olhando no próprio nome (ex.: "Arroz Tipo 1 5kg").
+// Converte a unidade para kg e pega o primeiro tamanho encontrado (o peso do
+// produto em si, não o da embalagem).
+export function extrairTamanhoKg(nome: string): number | null {
+  const correspondencia = PADRAO_TAMANHO.exec(nome.toLowerCase());
+  if (!correspondencia) return null;
+
+  const numero = Number(correspondencia[1].replace(',', '.'));
+  if (!Number.isFinite(numero)) return null;
+
+  const unidade = correspondencia[2];
+  switch (unidade) {
+    case 'g':
+      return numero / 1000;
+    case 'ml':
+      return numero / 1000;
+    case 'kg':
+      return numero;
+    case 'l':
+      return numero;
+    default:
+      return null;
+  }
+}
+
+function lerNome(produto: Record<string, unknown>): string {
+  return typeof produto.name === 'string' ? produto.name.trim() : '';
+}
+
+function lerMarca(produto: Record<string, unknown>): string | null {
+  const marca = typeof produto.brand === 'string' ? produto.brand.trim() : '';
+  return marca || null;
+}
+
+function lerUrl(produto: Record<string, unknown>, token: string | null): string {
+  const url = typeof produto.url === 'string' ? produto.url.trim() : '';
+  if (url) return url;
+  if (token) return `${BASE_PRODUTO}${encodeURIComponent(token)}`;
+  return '';
+}
+
+// Todos os produtos com preço válido da página de busca, no máximo 5, do mais
+// barato para o mais caro. O caminho `props.initialMobxState.productStore`
+// vem de `produtosDaBusca` (com a varredura de fallback), daqui só filtramos
+// preço válido, token e ordenamos.
+export function produtosDaBuscaOrdenados(
+  html: string,
+  maximo = 5,
+  faixa?: FaixaDeTamanho,
+): ResultadoBuscaTenda[] {
+  const dados = lerNextData(html);
+  if (dados === null) return [];
+
+  const bruto = produtosDaBusca(dados);
+
+  const resultados: ResultadoBuscaTenda[] = [];
+  for (const item of bruto) {
+    const produto = comoObjeto(item);
+    if (!produto) continue;
+    const preco = lerPreco(produto.price);
+    if (preco === null) continue;
+    const token = tokenDe(produto);
+    if (!token) continue;
+    const nome = lerNome(produto) || token;
+    const tamanhoKg = extrairTamanhoKg(nome);
+    if (!dentroDaFaixa(tamanhoKg, faixa)) continue;
+    resultados.push({
+      token,
+      nome,
+      preco,
+      marca: lerMarca(produto),
+      url: lerUrl(produto, token),
+      tamanhoKg,
+      tamanhoTexto: extrairTamanhoTexto(nome),
+    });
+  }
+
+  resultados.sort((a, b) => a.preco - b.preco);
+  return resultados.slice(0, maximo);
+}
+
 function comoObjeto(valor: unknown): Record<string, unknown> | null {
   if (typeof valor !== 'object' || valor === null || Array.isArray(valor)) return null;
   return valor as Record<string, unknown>;
@@ -136,13 +270,11 @@ export function extrairProdutoDaBusca(html: string): ProdutoDaBuscaTenda | null 
     if (!produto) continue;
     const token = tokenDe(produto);
     if (!token) continue;
-    const nome = typeof produto.name === 'string' ? produto.name.trim() : '';
-    const marca = typeof produto.brand === 'string' ? produto.brand.trim() : '';
     return {
       token,
-      nome: nome || token,
+      nome: lerNome(produto) || token,
       preco: lerPreco(produto.price),
-      marca: marca || null,
+      marca: lerMarca(produto),
     };
   }
 

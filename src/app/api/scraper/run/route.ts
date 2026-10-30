@@ -6,8 +6,9 @@ import {
   type ProdutoParaAtualizar,
 } from '@/lib/scraper/atualizar-precos';
 
-// Botão do painel. Mesmo caminho do cron: lê a página pública de cada produto.
-// A `api.tendaatacado.com.br` responde 404 e o TENDA_BEARER_TOKEN não é mais usado.
+// Botão do painel. Mesmo caminho do cron: busca o termo de cada produto na
+// página de busca da Tenda, escolhe o mais barato e grava preço, marca e
+// histórico.
 export const maxDuration = 60;
 
 export async function POST(): Promise<Response> {
@@ -38,7 +39,7 @@ export async function POST(): Promise<Response> {
 
     const { data: produtos, error } = await admin
       .from('produtos')
-      .select('id, token_tenda, url_tenda, preco_atual, ultima_atualizacao_preco')
+      .select('id, termo_busca, token_tenda, preco_atual')
       .eq('ativo', true);
 
     if (error) throw new Error(`Erro ao buscar produtos: ${error.message}`);

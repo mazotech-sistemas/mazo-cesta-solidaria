@@ -5,8 +5,8 @@ import {
   type ProdutoParaAtualizar,
 } from '@/lib/scraper/atualizar-precos';
 
-// Cron diário. O preço vem da página pública de cada produto, não de API: a
-// `api.tendaatacado.com.br` responde 404 e o TENDA_BEARER_TOKEN não é mais usado.
+// Cron diário. Busca o `termo_busca` de cada produto ativo na página de busca
+// da Tenda, escolhe o mais barato e grava preço, marca e histórico.
 export const maxDuration = 60;
 
 export async function GET(request: Request): Promise<Response> {
@@ -32,7 +32,7 @@ export async function GET(request: Request): Promise<Response> {
   try {
     const { data: produtos, error } = await supabase
       .from('produtos')
-      .select('id, token_tenda, url_tenda, preco_atual, ultima_atualizacao_preco')
+      .select('id, termo_busca, token_tenda, preco_atual')
       .eq('ativo', true);
 
     if (error) throw new Error(`Erro ao buscar produtos: ${error.message}`);

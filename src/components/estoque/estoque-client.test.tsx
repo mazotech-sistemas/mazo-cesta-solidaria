@@ -28,12 +28,12 @@ const mockProdutos: Produto[] = [
     id: 1,
     nome: 'Arroz 5kg',
     marca: 'Tio João',
-    unidade: 'kg',
+    unidade: '5kg',
     qtd_por_cesta: 5,
     estoque_atual: 10,
     preco_atual: 25.90,
     token_tenda: '123',
-    url_tenda: null,
+    url_tenda: 'https://www.tendaatacado.com.br/produto/arroz-tio-joao-5kg',
     termo_busca: null,
     ativo: true,
     ultima_atualizacao_preco: '2024-01-15',
@@ -44,7 +44,7 @@ const mockProdutos: Produto[] = [
     id: 2,
     nome: 'Feijão 1kg',
     marca: 'Camil',
-    unidade: 'kg',
+    unidade: '1kg',
     qtd_por_cesta: 2,
     estoque_atual: 1,
     preco_atual: 8.50,
@@ -60,7 +60,7 @@ const mockProdutos: Produto[] = [
     id: 3,
     nome: 'Óleo 900ml',
     marca: 'Soya',
-    unidade: 'ml',
+    unidade: '900ml',
     qtd_por_cesta: 1,
     estoque_atual: 5,
     preco_atual: 12.00,
@@ -91,11 +91,32 @@ describe('EstoqueClient', () => {
   it('exibe cabeçalhos da tabela corretos', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
     expect(screen.getByText('Produto')).toBeInTheDocument();
-    expect(screen.getByText('Marca')).toBeInTheDocument();
     expect(screen.getByText('Estoque')).toBeInTheDocument();
     expect(screen.getByText('Preço Atual')).toBeInTheDocument();
     expect(screen.getByText('Qtd/Cesta')).toBeInTheDocument();
     expect(screen.getByText('Última Atualização')).toBeInTheDocument();
+  });
+
+  it('mostra marca e tamanho do item escolhido na linha do produto', () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
+    expect(screen.getByTestId('referencia-produto-1')).toHaveTextContent('Tio João · 5kg');
+    expect(screen.getByTestId('referencia-produto-2')).toHaveTextContent('Camil · 1kg');
+    expect(screen.getByTestId('referencia-produto-3')).toHaveTextContent('Soya · 900ml');
+  });
+
+  it('linka o produto na Tenda quando existe url_tenda', () => {
+    render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
+    const links = screen.getAllByRole('link', { name: /ver na tenda/i });
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute('href', mockProdutos[0].url_tenda);
+    expect(links[0]).toHaveAttribute('target', '_blank');
+    expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('não mostra link para a Tenda quando o produto não tem url_tenda', () => {
+    render(<EstoqueClient produtos={[mockProdutos[1]]} isAdmin={false} />);
+    expect(screen.queryByRole('link', { name: /ver na tenda/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId('referencia-produto-2')).toHaveTextContent('Camil · 1kg');
   });
 
   it('exibe badge "Baixo" para produtos com estoque ≤ 2', () => {
@@ -197,10 +218,16 @@ describe('EstoqueClient', () => {
     expect(screen.getAllByText('5,00').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('exibe "-" quando marca é nula', () => {
+  it('exibe "-" no lugar da marca quando ela é nula', () => {
     const produtosSemMarca = [{ ...mockProdutos[0], marca: null }];
     render(<EstoqueClient produtos={produtosSemMarca} isAdmin={false} />);
-    expect(screen.getByText('-')).toBeInTheDocument();
+    expect(screen.getByTestId('referencia-produto-1')).toHaveTextContent('- · 5kg');
+  });
+
+  it('exibe apenas "-" quando marca e tamanho são nulos', () => {
+    const semReferencia = [{ ...mockProdutos[0], marca: null, unidade: null }];
+    render(<EstoqueClient produtos={semReferencia} isAdmin={false} />);
+    expect(screen.getByTestId('referencia-produto-1')).toHaveTextContent(/^-$/);
   });
 
   it('exibe "-" quando ultima_atualizacao_preco é nula', () => {
