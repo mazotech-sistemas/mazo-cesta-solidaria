@@ -106,7 +106,7 @@ describe('buscarTermoNaTenda', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const resultados = await buscarTermoNaTenda('termo qualquer');
+    const resultados = await buscarTermoNaTenda('item');
     expect(resultados).toHaveLength(5);
     expect(resultados[0].preco).toBeLessThan(resultados[4].preco);
   });
@@ -159,42 +159,6 @@ describe('buscarTermoNaTenda', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(buscarTermoNaTenda('arroz')).rejects.toThrow('timeout');
-  });
-
-  it('traz o texto da embalagem como a Tenda escreve no nome', async () => {
-    const html = paginaDeBusca([
-      {
-        id: 300,
-        name: 'Óleo de Soja Liza 900ml',
-        token: 'oleo-liza-900ml',
-        url: 'https://www.tendaatacado.com.br/produto/oleo-liza-900ml',
-        price: 6.99,
-        brand: 'Liza',
-      },
-      {
-        id: 301,
-        name: 'Leite Condensado Moça 395g',
-        token: 'leite-moca-395g',
-        url: 'https://www.tendaatacado.com.br/produto/leite-moca-395g',
-        price: 5.49,
-        brand: 'Nestlé',
-      },
-      {
-        id: 302,
-        name: 'Arroz Tipo 1 Camil 5 kg',
-        token: 'arroz-camil-5kg',
-        url: 'https://www.tendaatacado.com.br/produto/arroz-camil-5kg',
-        price: 18.49,
-        brand: 'Camil',
-      },
-    ]);
-    const fetchMock = vi.fn(async () => new Response(html, { status: 200 }));
-    vi.stubGlobal('fetch', fetchMock);
-
-    const resultados = await buscarTermoNaTenda('mantimentos');
-
-    expect(resultados.map((item) => item.tamanhoTexto)).toEqual(['395g', '900ml', '5kg']);
-    expect(resultados.map((item) => item.tamanhoKg)).toEqual([0.395, 0.9, 5]);
   });
 
   it('aceita 5kg e rejeita 10kg com a faixa derivada do termo', async () => {

@@ -61,6 +61,85 @@ export interface FaixaDeTamanho {
   max?: number | null;
 }
 
+// Palavras que aparecem em quase todo termo e não ajudam a separar categoria:
+// "milho de pipoca" precisa casar milho e pipoca, não o "de".
+const STOPWORDS_DO_TERMO = new Set([
+  'de',
+  'da',
+  'do',
+  'das',
+  'dos',
+  'e',
+  'com',
+  'para',
+  'sem',
+  'em',
+  'no',
+  'na',
+  'tipo',
+]);
+
+// A Tenda costuma escrever o peso na descrição; campos separados de
+// especificação nem sempre existem, então o nome é a fonte confiável. O padrão
+// pega número seguido de kg/g/ml/l e serve para os três usos: normalizar a
+// comparação, o valor em kg do filtro e o texto que aparece na tela.
+const UNIDADES_DE_PESO = 'kg|g|ml|l';
+const PADRAO_TAMANHO = new RegExp(`(\\d+(?:[.,]\\d+)?)\\s*(${UNIDADES_DE_PESO})\\b`);
+const PADRAO_TAMANHO_GLOBAL = new RegExp(PADRAO_TAMANHO.source, 'g');
+
+// Minúsculas, sem acento, hífen e barra viram espaço, número colado na unidade
+// e espaço repetido colapsado. É a forma usada para comparar termo e nome.
+export function normalizarTexto(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[-/]/g, ' ')
+    .replace(PADRAO_TAMANHO_GLOBAL, '$1$2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Palavras que o nome do candidato precisa conter. Stopword e token de uma
+// letra ("1" de "arroz tipo 1") não entram na conta.
+export function palavrasDoTermo(termo: string): string[] {
+  return normalizarTexto(termo)
+    .split(' ')
+    .filter((palavra) => palavra.length >= 2 && !STOPWORDS_DO_TERMO.has(palavra));
+}
+
+// A palavra precisa aparecer inteira: "sal" não casa com "salgado".
+function contemPalavra(nomeNormalizado: string, palavra: string): boolean {
+  const escapada = palavra.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${escapada}([^a-z0-9]|$)`).test(nomeNormalizado);
+}
+
+// Filtra os candidatos pelo nome antes de olhar preço. Primeiro tenta exigir
+// todas as palavras do termo; se nenhum candidato casar com todas, aceita os
+// que casarem com pelo menos metade (mínimo de 2, ou 1 para termo de uma
+// palavra). Sem isso o mais barato da página pode ser de outra categoria:
+// "milho de pipoca" pegava pipoca doce pronta.
+export function candidatosDoTermo(
+  termo: string,
+  resultados: ResultadoBuscaTenda[],
+): ResultadoBuscaTenda[] {
+  const palavras = palavrasDoTermo(termo);
+  if (palavras.length === 0) return resultados;
+
+  const pontuados = resultados.map((item) => {
+    const nome = normalizarTexto(item.nome);
+    const casadas = palavras.filter((palavra) => contemPalavra(nome, palavra)).length;
+    return { item, casadas };
+  });
+
+  const completos = pontuados.filter(({ casadas }) => casadas === palavras.length);
+  if (completos.length > 0) return completos.map(({ item }) => item);
+
+  const minimo =
+    palavras.length === 1 ? 1 : Math.max(2, Math.ceil(palavras.length / 2));
+  return pontuados.filter(({ casadas }) => casadas >= minimo).map(({ item }) => item);
+}
+
 function faixaTemRestricao(faixa?: FaixaDeTamanho | null): boolean {
   if (!faixa) return false;
   return (Number(faixa.min) > 0) || (Number(faixa.max) > 0);
@@ -75,12 +154,6 @@ function dentroDaFaixa(tamanhoKg: number | null, faixa?: FaixaDeTamanho | null):
   if (max > 0 && tamanhoKg > max) return false;
   return true;
 }
-
-// A Tenda costuma escrever o peso na descrição; campos separados de
-// especificação nem sempre existem, então o nome é a fonte confiável. O padrão
-// pega número seguido de kg/g/ml/l e serve para os dois usos: o valor em kg do
-// filtro e o texto que aparece na tela.
-const PADRAO_TAMANHO = /(\d+(?:[.,]\d+)?)\s*(kg|g|ml|l)\b/;
 
 // Texto da embalagem como veio no nome, sem o espaço entre número e unidade.
 export function extrairTamanhoTexto(nome: string): string | null {
@@ -132,20 +205,20 @@ function lerUrl(produto: Record<string, unknown>, token: string | null): string 
 
 // Todos os produtos com preço válido da página de busca, no máximo 5, do mais
 // barato para o mais caro. O caminho `props.initialMobxState.productStore`
-// vem de `produtosDaBusca` (com a varredura de fallback), daqui só filtramos
-// preço válido, token e ordenamos.
+// vem de `produtosDaBusca` (com a varredura de fallback), daqui filtramos nome,
+// tamanho e ordenamos. O nome vem antes do tamanho: pegar o mais barato de
+// outra categoria é pior do que ficar sem preço.
 export function produtosDaBuscaOrdenados(
   html: string,
   maximo = 5,
   faixa?: FaixaDeTamanho,
+  termo?: string,
 ): ResultadoBuscaTenda[] {
   const dados = lerNextData(html);
   if (dados === null) return [];
 
-  const bruto = produtosDaBusca(dados);
-
-  const resultados: ResultadoBuscaTenda[] = [];
-  for (const item of bruto) {
+  const comPreco: ResultadoBuscaTenda[] = [];
+  for (const item of produtosDaBusca(dados)) {
     const produto = comoObjeto(item);
     if (!produto) continue;
     const preco = lerPreco(produto.price);
@@ -153,18 +226,19 @@ export function produtosDaBuscaOrdenados(
     const token = tokenDe(produto);
     if (!token) continue;
     const nome = lerNome(produto) || token;
-    const tamanhoKg = extrairTamanhoKg(nome);
-    if (!dentroDaFaixa(tamanhoKg, faixa)) continue;
-    resultados.push({
+    comPreco.push({
       token,
       nome,
       preco,
       marca: lerMarca(produto),
       url: lerUrl(produto, token),
-      tamanhoKg,
+      tamanhoKg: extrairTamanhoKg(nome),
       tamanhoTexto: extrairTamanhoTexto(nome),
     });
   }
+
+  const doTermo = termo ? candidatosDoTermo(termo, comPreco) : comPreco;
+  const resultados = doTermo.filter((item) => dentroDaFaixa(item.tamanhoKg, faixa));
 
   resultados.sort((a, b) => a.preco - b.preco);
   return resultados.slice(0, maximo);
