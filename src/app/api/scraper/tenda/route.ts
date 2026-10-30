@@ -42,7 +42,10 @@ export async function GET(request: Request): Promise<Response> {
       (produtos ?? []) as ProdutoParaAtualizar[],
     );
 
-    return NextResponse.json(resultado);
+    return NextResponse.json({
+      ...resultado,
+      relatorio_cesta: resultado.relatorio_cesta ?? undefined,
+    });
   } catch (erro) {
     console.error('Erro no scraper:', erro);
     return NextResponse.json(

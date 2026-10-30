@@ -33,6 +33,7 @@ export interface ResultadoAtualizacaoPrecos {
   sem_preco: number;
   sem_tamanho: number;
   erros: { total: number; identificadores: string[] };
+  relatorio_cesta?: string;
 }
 
 export function criarClienteServico(): SupabaseClient | null {
@@ -139,6 +140,83 @@ const FORMATADOR_DIA_SAO_PAULO = new Intl.DateTimeFormat('en-CA', {
 
 export function diaEmSaoPaulo(data: Date = new Date()): string {
   return FORMATADOR_DIA_SAO_PAULO.format(data);
+}
+
+export async function gerarRelatorioCesta(supabase: SupabaseClient): Promise<string> {
+  const { data: produtos, error } = await supabase
+    .from('produtos')
+    .select('nome, preco_atual, qtd_por_cesta')
+    .eq('ativo', true)
+    .gt('preco_atual', 0)
+    .gt('qtd_por_cesta', 0);
+
+  if (error) {
+    console.warn(`Relatório cesta: erro ao buscar produtos: ${error.message}`);
+    return '';
+  }
+
+  if (!produtos || produtos.length === 0) {
+    return '';
+  }
+
+  const itens = produtos
+    .map((produto) => ({
+      nome: produto.nome,
+      qtd: Number(produto.qtd_por_cesta),
+      preco: Number(produto.preco_atual),
+      subtotal: Number(produto.qtd_por_cesta) * Number(produto.preco_atual),
+    }))
+    .sort((a, b) => b.subtotal - a.subtotal);
+
+  const total = itens.reduce((soma, item) => soma + item.subtotal, 0);
+  const dia = diaEmSaoPaulo();
+
+  const linhas = itens.map(
+    (item) => `${item.nome}: ${item.qtd} x R$ ${item.preco.toFixed(2).replace('.', ',')} = R$ ${item.subtotal.toFixed(2).replace('.', ',')}`,
+  );
+
+  const relatorio =
+    `Cesta Solidária - ${dia}\n` +
+    linhas.join('\n') +
+    `\nTOTAL: R$ ${total.toFixed(2).replace('.', ',')}`;
+
+  // Upload para Supabase Storage
+  const nomeArquivo = `custo_cesta_${dia}.txt`;
+  try {
+    const { error: uploadError } = await supabase.storage
+      .from('relatorios')
+      .upload(nomeArquivo, new Blob([relatorio], { type: 'text/plain;charset=utf-8' }), {
+        upsert: true,
+      });
+
+    if (uploadError) {
+      if (uploadError.message.includes('404') || uploadError.message.includes('not found')) {
+        // Bucket não existe, tenta criar
+        const { error: createError } = await supabase.storage.createBucket('relatorios', {
+          public: false,
+        });
+        if (createError) {
+          console.warn(`Relatório cesta: erro ao criar bucket: ${createError.message}`);
+        } else {
+          // Tenta upload novamente
+          const { error: retryError } = await supabase.storage
+            .from('relatorios')
+            .upload(nomeArquivo, new Blob([relatorio], { type: 'text/plain;charset=utf-8' }), {
+              upsert: true,
+            });
+          if (retryError) {
+            console.warn(`Relatório cesta: erro no upload após criar bucket: ${retryError.message}`);
+          }
+        }
+      } else {
+        console.warn(`Relatório cesta: erro no upload: ${uploadError.message}`);
+      }
+    }
+  } catch (excecao) {
+    console.warn(`Relatório cesta: exceção no upload: ${excecao instanceof Error ? excecao.message : String(excecao)}`);
+  }
+
+  return relatorio;
 }
 
 export async function atualizarPrecosDosProdutos(
@@ -262,6 +340,8 @@ export async function atualizarPrecosDosProdutos(
       `${resultado.sem_tamanho} sem tamanho, ${resultado.erros.total} erros ` +
       `(rótulo de catálogo ${regionId}; o preço lido é o do site, sem filial)`,
   );
+
+  resultado.relatorio_cesta = await gerarRelatorioCesta(supabase);
   return resultado;
 }
 

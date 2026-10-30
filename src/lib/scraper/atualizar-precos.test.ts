@@ -4,6 +4,7 @@ import {
   atualizarPrecosDosProdutos,
   diaEmSaoPaulo,
   faixaDoTermo,
+  gerarRelatorioCesta,
   type ProdutoParaAtualizar,
 } from './atualizar-precos';
 
@@ -62,6 +63,9 @@ interface Operacao {
 interface ConfiguracaoDoFalso {
   regionId?: string;
   erroNoUpsert?: string;
+  produtosParaRelatorio?: Array<{ nome: string; preco_atual: number; qtd_por_cesta: number }>;
+  storageErro?: string;
+  bucketExiste?: boolean;
 }
 
 // Supabase falso com o mínimo que o scraper usa: `select().eq().maybeSingle()`
@@ -69,6 +73,7 @@ interface ConfiguracaoDoFalso {
 // operação para o teste conferir o que foi gravado.
 function criarSupabaseFalso(configuracao: ConfiguracaoDoFalso = {}) {
   const operacoes: Operacao[] = [];
+  const storageOperacoes: Array<{ bucket: string; acao: string; arquivo: string; conteudo?: string }> = [];
 
   const from = (tabela: string) => {
     let tipo: Operacao['tipo'] = 'select';
@@ -103,20 +108,95 @@ function criarSupabaseFalso(configuracao: ConfiguracaoDoFalso = {}) {
         filtros[coluna] = valor;
         return api;
       },
+      gt: (coluna: string, valor: unknown) => {
+        filtros[`${coluna}.gt`] = valor;
+        return api;
+      },
       maybeSingle: async () => {
         registrar();
         if (tabela === 'config') {
           return { data: { valor: configuracao.regionId ?? '000010' }, error: null };
         }
+        if (tabela === 'produtos' && tipo === 'select') {
+          // Simula busca de produtos para relatório
+          const temFiltroAtivo = filtros.ativo === true;
+          const temGtPreco = filtros['preco_atual.gt'] === 0;
+          const temGtQtd = filtros['qtd_por_cesta.gt'] === 0;
+          if (temFiltroAtivo && temGtPreco && temGtQtd) {
+            const produtos = (configuracao.produtosParaRelatorio ?? [])
+              .filter((p) => p.preco_atual > 0 && p.qtd_por_cesta > 0)
+              .map((p) => ({
+                nome: p.nome,
+                preco_atual: p.preco_atual,
+                qtd_por_cesta: p.qtd_por_cesta,
+              }));
+            return { data: produtos, error: null };
+          }
+          return { data: null, error: null };
+        }
         return { data: null, error: null };
       },
-      then: (resolver: (valor: unknown) => unknown) => resolver(registrar()),
+      then: (onFulfilled?: (value: { data: unknown; error: unknown }) => unknown) => {
+        // Simula o retorno da query quando não usa .maybeSingle() - apenas para select
+        if (tabela === 'produtos' && tipo === 'select') {
+          const temFiltroAtivo = filtros.ativo === true;
+          const temGtPreco = filtros['preco_atual.gt'] === 0;
+          const temGtQtd = filtros['qtd_por_cesta.gt'] === 0;
+          if (temFiltroAtivo && temGtPreco && temGtQtd) {
+            const produtos = (configuracao.produtosParaRelatorio ?? [])
+              .filter((p) => p.preco_atual > 0 && p.qtd_por_cesta > 0)
+              .map((p) => ({
+                nome: p.nome,
+                preco_atual: p.preco_atual,
+                qtd_por_cesta: p.qtd_por_cesta,
+              }));
+            return Promise.resolve({ data: produtos, error: null }).then(onFulfilled);
+          }
+        }
+        // Para update/upsert, usa o registrar normal
+        return Promise.resolve(registrar()).then(onFulfilled);
+      },
     };
 
     return api;
   };
 
-  return { cliente: { from } as unknown as SupabaseClient, operacoes };
+  // Mock do storage
+  const storage = {
+    from: (bucket: string) => ({
+      upload: async (arquivo: string, blob: Blob, opcoes?: { upsert?: boolean }) => {
+        let conteudo = '';
+        try {
+          conteudo = await blob.text();
+        } catch {
+          conteudo = '[blob]';
+        }
+        storageOperacoes.push({ bucket, acao: 'upload', arquivo, conteudo });
+
+        if (configuracao.storageErro) {
+          return { data: null, error: { message: configuracao.storageErro } };
+        }
+        if (!configuracao.bucketExiste) {
+          return { data: null, error: { message: 'Bucket not found (404)' } };
+        }
+        return { data: { path: arquivo }, error: null };
+      },
+    }),
+    createBucket: async (bucket: string, opcoes?: { public?: boolean }) => {
+      storageOperacoes.push({ bucket, acao: 'createBucket', arquivo: '', conteudo: JSON.stringify(opcoes) });
+      if (configuracao.storageErro) {
+        return { data: null, error: { message: configuracao.storageErro } };
+      }
+      configuracao.bucketExiste = true;
+      return { data: { name: bucket }, error: null };
+    },
+  };
+
+  return {
+    cliente: { from, storage } as unknown as SupabaseClient,
+    operacoes,
+    storageOperacoes,
+  };
 }
 
 const atualizacoesDeProduto = (operacoes: Operacao[]) =>
@@ -412,5 +492,149 @@ describe('atualizarPrecosDosProdutos', () => {
 
     expect(resultado.erros.total).toBe(12);
     expect(resultado.erros.identificadores).toHaveLength(10);
+  });
+});
+
+describe('gerarRelatorioCesta', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('retorna string vazia quando não há produtos ativos com preço > 0', async () => {
+    const { cliente } = criarSupabaseFalso({ produtosParaRelatorio: [] });
+
+    const relatorio = await gerarRelatorioCesta(cliente);
+
+    expect(relatorio).toBe('');
+  });
+
+  it('retorna string vazia quando todos os produtos têm preço 0', async () => {
+    const { cliente } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz', preco_atual: 0, qtd_por_cesta: 1 },
+        { nome: 'Feijão', preco_atual: 0, qtd_por_cesta: 1 },
+      ],
+    });
+
+    const relatorio = await gerarRelatorioCesta(cliente);
+
+    expect(relatorio).toBe('');
+  });
+
+  it('retorna string vazia quando todos os produtos têm qtd_por_cesta 0', async () => {
+    const { cliente } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz', preco_atual: 18.99, qtd_por_cesta: 0 },
+        { nome: 'Feijão', preco_atual: 6.99, qtd_por_cesta: 0 },
+      ],
+    });
+
+    const relatorio = await gerarRelatorioCesta(cliente);
+
+    expect(relatorio).toBe('');
+  });
+
+  it('gera relatório com cabeçalho, itens ordenados por subtotal decrescente e total', async () => {
+    const { cliente } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz Tipo 1 Bem+Você (5kg)', preco_atual: 18.99, qtd_por_cesta: 1 },
+        { nome: 'Feijão Carioca Tipo 1 (1kg)', preco_atual: 6.99, qtd_por_cesta: 1 },
+        { nome: 'Óleo de Soja (900ml)', preco_atual: 8.49, qtd_por_cesta: 2 },
+      ],
+      bucketExiste: true,
+    });
+
+    const relatorio = await gerarRelatorioCesta(cliente);
+
+    expect(relatorio).toContain('Cesta Solidária - ');
+    expect(relatorio).toContain('Arroz Tipo 1 Bem+Você (5kg): 1 x R$ 18,99 = R$ 18,99');
+    expect(relatorio).toContain('Óleo de Soja (900ml): 2 x R$ 8,49 = R$ 16,98');
+    expect(relatorio).toContain('Feijão Carioca Tipo 1 (1kg): 1 x R$ 6,99 = R$ 6,99');
+    expect(relatorio).toContain('TOTAL: R$ 42,96');
+    // Verifica ordem decrescente por subtotal
+    const linhas = relatorio.split('\n').slice(1, -1); // remove cabeçalho e total
+    const subtotais = linhas.map((linha) => {
+      const partes = linha.split(' = R$ ');
+      return parseFloat(partes[1].replace(',', '.'));
+    });
+    expect(subtotais).toEqual([...subtotais].sort((a, b) => b - a));
+  });
+
+  it('faz upload no bucket relatorios com nome custo_cesta_<data>.txt', async () => {
+    const { cliente, storageOperacoes } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz', preco_atual: 18.99, qtd_por_cesta: 1 },
+      ],
+      bucketExiste: true,
+    });
+
+    await gerarRelatorioCesta(cliente);
+
+    expect(storageOperacoes.length).toBe(1);
+    expect(storageOperacoes[0].bucket).toBe('relatorios');
+    expect(storageOperacoes[0].acao).toBe('upload');
+    expect(storageOperacoes[0].arquivo).toMatch(/^custo_cesta_\d{4}-\d{2}-\d{2}\.txt$/);
+  });
+
+  it('cria bucket se não existir e tenta upload novamente', async () => {
+    const { cliente, storageOperacoes } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz', preco_atual: 18.99, qtd_por_cesta: 1 },
+      ],
+      bucketExiste: false,
+    });
+
+    await gerarRelatorioCesta(cliente);
+
+    // upload falha (404) -> createBucket -> retry upload = 3 operações
+    expect(storageOperacoes.length).toBe(3);
+    expect(storageOperacoes[0].acao).toBe('upload');
+    expect(storageOperacoes[0].bucket).toBe('relatorios');
+    expect(storageOperacoes[1].acao).toBe('createBucket');
+    expect(storageOperacoes[1].bucket).toBe('relatorios');
+    expect(storageOperacoes[1].conteudo).toContain('"public":false');
+    expect(storageOperacoes[2].acao).toBe('upload');
+  });
+
+  it('não falha se criação do bucket falhar', async () => {
+    const { cliente } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz', preco_atual: 18.99, qtd_por_cesta: 1 },
+      ],
+      bucketExiste: false,
+      storageErro: 'permission denied',
+    });
+
+    const relatorio = await gerarRelatorioCesta(cliente);
+
+    // Ainda retorna o relatório mesmo se o upload falhar
+    expect(relatorio).toContain('Arroz');
+    expect(relatorio).toContain('TOTAL:');
+  });
+});
+
+describe('atualizarPrecosDosProdutos com relatório', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('inclui relatorio_cesta no resultado', async () => {
+    simularBusca([produtoDaTenda('arroz-5kg', 'Arroz Tipo 1 Camil 5kg', 18.49)]);
+    const { cliente } = criarSupabaseFalso({
+      produtosParaRelatorio: [
+        { nome: 'Arroz Tipo 1 Camil 5kg', preco_atual: 18.49, qtd_por_cesta: 1 },
+      ],
+      bucketExiste: true,
+    });
+
+    const resultado = await atualizarPrecosDosProdutos(cliente, [produtoDaCesta()]);
+
+    expect(resultado.relatorio_cesta).toBeDefined();
+    expect(typeof resultado.relatorio_cesta).toBe('string');
+    expect(resultado.relatorio_cesta).toContain('Cesta Solidária - ');
+    expect(resultado.relatorio_cesta).toContain('Arroz Tipo 1 Camil 5kg');
+    expect(resultado.relatorio_cesta).toContain('TOTAL:');
   });
 });
