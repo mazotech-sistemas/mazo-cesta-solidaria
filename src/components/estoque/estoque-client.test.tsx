@@ -91,10 +91,10 @@ describe('EstoqueClient', () => {
   it('exibe cabeçalhos da tabela corretos', () => {
     render(<EstoqueClient produtos={mockProdutos} isAdmin={false} />);
     expect(screen.getByText('Produto')).toBeInTheDocument();
-    expect(screen.getByText('Estoque')).toBeInTheDocument();
-    expect(screen.getByText('Preço Atual')).toBeInTheDocument();
-    expect(screen.getByText('Qtd/Cesta')).toBeInTheDocument();
-    expect(screen.getByText('Última Atualização')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Estoque' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Preço Atual' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Qtd/Cesta' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Última Atualização' })).toBeInTheDocument();
   });
 
   it('mostra marca e tamanho do item escolhido na linha do produto', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { precoDesatualizado, idadePrecoDias } from '../preco-stale';
+import { precoDesatualizado, idadePrecoDias } from './preco-stale';
 
 // Fixa a data de referência para que o teste não mude conforme o momento em
 // que roda (stale é relativo a "hoje").
