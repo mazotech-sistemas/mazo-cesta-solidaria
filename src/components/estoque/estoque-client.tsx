@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { precoDesatualizado } from '@/lib/preco-stale';
 import { Produto, ProdutoUpdate } from '@/types/database';
 import { Input } from '@/components/ui/input';
 import { SearchIcon, PlusIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, AlertTriangleIcon } from '@/components/icons';
@@ -20,12 +21,8 @@ interface EstoqueClientProps {
 
 type StatusPreco = 'todos' | 'automatico' | 'manual' | 'desatualizado';
 
-function precoDesatualizado(produto: Produto, dias: number): boolean {
-  if (!produto.ultima_atualizacao_preco) return true;
-  const limite = new Date();
-  limite.setDate(limite.getDate() - dias);
-  const ultimo = new Date(produto.ultima_atualizacao_preco);
-  return ultimo < limite;
+function precoDesatualizadoProduto(produto: Produto, dias: number): boolean {
+  return precoDesatualizado(produto.ultima_atualizacao_preco, dias);
 }
 
 /**
@@ -88,6 +85,8 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
   const [search, setSearch] = useState('');
   const [showLowStock, setShowLowStock] = useState(false);
   const [statusPreco, setStatusPreco] = useState<StatusPreco>('todos');
+  const [sortField, setSortField] = useState<'nome' | 'estoque' | 'preco' | 'qtd_cesta' | 'custo_cesta'>('nome');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [showNovoProduto, setShowNovoProduto] = useState(false);
   const [novo, setNovo] = useState<NovoProduto>(produtoVazio);
   const [criando, setCriando] = useState(false);
@@ -123,20 +122,54 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
       if (statusPreco === 'manual' && p.token_tenda) {
         return false;
       }
-      if (statusPreco === 'desatualizado' && (!p.token_tenda || !precoDesatualizado(p, precoStaleDias))) {
+      if (statusPreco === 'desatualizado' && (!p.token_tenda || !precoDesatualizadoProduto(p, precoStaleDias))) {
         return false;
       }
       return true;
+    })
+    .sort((a, b) => {
+      let aVal: number | string;
+      let bVal: number | string;
+
+      switch (sortField) {
+        case 'estoque':
+          aVal = a.estoque_atual;
+          bVal = b.estoque_atual;
+          break;
+        case 'preco':
+          aVal = a.preco_atual;
+          bVal = b.preco_atual;
+          break;
+        case 'qtd_cesta':
+          aVal = a.qtd_por_cesta;
+          bVal = b.qtd_por_cesta;
+          break;
+        case 'custo_cesta':
+          aVal = a.qtd_por_cesta * a.preco_atual;
+          bVal = b.qtd_por_cesta * b.preco_atual;
+          break;
+        case 'nome':
+        default:
+          aVal = a.nome.toLowerCase();
+          bVal = b.nome.toLowerCase();
+          break;
+      }
+
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+      return 0;
     });
 
   const limparFiltros = () => {
     setSearch('');
     setShowLowStock(false);
     setStatusPreco('todos');
+    setSortField('nome');
+    setSortDir('asc');
   };
 
   const desatualizados = lista.filter(
-    (p) => p.token_tenda && precoDesatualizado(p, precoStaleDias)
+    (p) => p.token_tenda && precoDesatualizadoProduto(p, precoStaleDias)
   ).length;
 
   // A coluna de ações fica presa à direita enquanto a tabela rola. O hairline
@@ -494,7 +527,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
           <div className="relative flex-1 min-w-0">
             <SearchIcon
               size={16}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-steel/70"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate_y-1/2 text-steel/70"
             />
             <Input
               type="text"
@@ -529,6 +562,45 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
               <option value="manual">manual</option>
               <option value="desatualizado">desatualizado</option>
             </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="ordenacao" className="text-[13px] text-steel font-medium whitespace-nowrap">Ordenar</label>
+            <select
+              id="ordenacao"
+              data-testid="ordenacao-select"
+              value={sortField}
+              onChange={(e) => {
+                const field = e.target.value as typeof sortField;
+                setSortField(field);
+                // Custo na cesta padrão decrescente para ver o que mais pesa primeiro
+                setSortDir(field === 'custo_cesta' ? 'desc' : 'asc');
+              }}
+              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+            >
+              <option value="nome">Nome</option>
+              <option value="estoque">Estoque</option>
+              <option value="preco">Preço</option>
+              <option value="qtd_cesta">Qtd/Cesta</option>
+              <option value="custo_cesta">Custo na cesta</option>
+            </select>
+            <button
+              type="button"
+              data-testid="ordenacao-direcao"
+              onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
+              aria-label={sortDir === 'asc' ? 'Ordenar decrescente' : 'Ordenar crescente'}
+              className="h-8 w-8 rounded-lg border border-[var(--line)] bg-paper flex items-center justify-center text-steel hover:text-ink hover:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20 transition-colors"
+            >
+              {sortDir === 'asc' ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
