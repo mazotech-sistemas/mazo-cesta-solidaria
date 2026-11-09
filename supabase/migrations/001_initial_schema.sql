@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.compras (
   numero_cestas INT NOT NULL,
   itens JSONB NOT NULL,
   total DECIMAL(10,2) NOT NULL,
-  criado_por UUID NOT NULL REFERENCES auth.users(id),
+  criado_por UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -224,3 +224,9 @@ BEGIN
   DELETE FROM auth.users WHERE id::TEXT = p_id;
 END;
 $$;
+
+-- 002: compras cascata quando o usuario e excluido
+ALTER TABLE public.compras DROP CONSTRAINT IF EXISTS compras_criado_por_fkey;
+ALTER TABLE public.compras ADD CONSTRAINT compras_criado_por_fkey
+  FOREIGN KEY (criado_por) REFERENCES auth.users(id) ON DELETE CASCADE;
+

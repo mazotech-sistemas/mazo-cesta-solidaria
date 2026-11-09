@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
 import { Spinner } from '@/components/ui/spinner';
-import { PlusIcon, DownloadIcon, UsersIcon } from '@/components/icons';
+import { PlusIcon, DownloadIcon } from '@/components/icons';
 
 interface BackupRegistro {
   id: string;

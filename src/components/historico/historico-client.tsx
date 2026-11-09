@@ -174,7 +174,6 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
   const [filterDateEnd, setFilterDateEnd] = useState('');
   const [search, setSearch] = useState('');
   const [ordem, setOrdem] = useState<OrdemCompra>('recentes');
-  const [graficoAberto, setGraficoAberto] = useState(false);
   const [prodPrecoId, setProdPrecoId] = useState<number | null>(null);
   const router = useRouter();
   const { push: toast } = useToast();

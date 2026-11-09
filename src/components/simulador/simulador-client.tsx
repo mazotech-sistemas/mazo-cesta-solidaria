@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/toast';
 import Link from 'next/link';
-import { SearchIcon, CheckIcon, PackageIcon, BasketIcon, DownloadIcon, AlertTriangleIcon } from '@/components/icons';
+import { SearchIcon, CheckIcon, PackageIcon, DownloadIcon, AlertTriangleIcon } from '@/components/icons';
 import {
   custoCesta,
   cestasPossiveisEstoque,
@@ -17,14 +17,6 @@ import {
   faltandoComprar,
 } from '@/lib/planner';
 import { gerarPdfListaCompras } from '@/lib/lista-compras';
-
-interface ItemSelecionado {
-  produto_id: number;
-  nome: string;
-  preco: number;
-  quantidade: number;
-  qtd_por_cesta: number;
-}
 
 interface SimuladorClientProps {
   produtos: Produto[];

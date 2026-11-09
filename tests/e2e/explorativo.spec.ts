@@ -2,7 +2,6 @@ import { test, expect, type Page } from '@playwright/test';
 import { limparDadosDeTeste, marcadorExecucao } from './support/limpeza';
 import { excluirComprasPorProduto } from './support/historico';
 
-const BASE = 'https://mazotech-cesta-solidaria.vercel.app';
 const RUN = marcadorExecucao();
 const ADMIN_EMAIL = process.env.CESTA_E2E_ADMIN_EMAIL || 'admin@cestasolidaria.org';
 const ADMIN_SENHA = process.env.CESTA_E2E_ADMIN_SENHA || 'senha123';

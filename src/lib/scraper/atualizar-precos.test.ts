@@ -164,7 +164,7 @@ function criarSupabaseFalso(configuracao: ConfiguracaoDoFalso = {}) {
   // Mock do storage
   const storage = {
     from: (bucket: string) => ({
-      upload: async (arquivo: string, blob: Blob, opcoes?: { upsert?: boolean }) => {
+      upload: async (arquivo: string, blob: Blob, _opcoes?: { upsert?: boolean }) => {
         let conteudo = '';
         try {
           conteudo = await blob.text();
