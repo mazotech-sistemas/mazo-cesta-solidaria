@@ -361,15 +361,18 @@ test('hidratacao: zero erro React #418 nas 4 telas em producao', async ({ page }
 
   for (const rota of ['/historico', '/estoque', '/dashboard', '/simulador']) {
     const erros: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') erros.push(msg.text());
-    });
-    page.on('pageerror', (err) => erros.push('pageerror: ' + err.message));
+    const onConsole = (msg: any) => { if (msg.type() === 'error') erros.push(msg.text()); };
+    const onPageError = (err: Error) => erros.push('pageerror: ' + err.message);
+    page.on('console', onConsole);
+    page.on('pageerror', onPageError);
 
     await irPara(page, rota);
     await page.waitForTimeout(2500);
     await page.reload({ waitUntil: 'load' });
     await page.waitForTimeout(2500);
+
+    page.off('console', onConsole);
+    page.off('pageerror', onPageError);
 
     const hidratacao = erros.filter((e) => /418|hydrat|did not match|Minified React error/i.test(e));
     console.log(`HIDRATACAO ${rota}:`, JSON.stringify(hidratacao));
