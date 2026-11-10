@@ -629,7 +629,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
           </div>
         )}
 
-        <p className="text-[12px] text-steel tabular-nums whitespace-nowrap sm:ml-auto min-[1360px]:ml-0 min-[1360px]:border-l min-[1360px]:border-[var(--line)] min-[1360px]:pl-3">
+        <p className="text-[12px] text-steel tabular-nums whitespace-nowrap sm:ml-auto min-[1360px]:ml-0 min-[1360px]:border-l min-[1360px]:border-[var(--line)] min-[1360px]:pl-3" suppressHydrationWarning>
           Mostrando {filtered.length} de {lista.length} produto{lista.length !== 1 ? 's' : ''}
           {desatualizados > 0 && (
             <span className="ml-2 inline-flex items-center gap-1 text-warn font-medium">
@@ -686,7 +686,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => (
-                    <TableRow key={p.id} className="group">
+                    <TableRow key={p.id} className="group" suppressHydrationWarning>
                       <TableCell>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
@@ -730,7 +730,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
                       <TableCell align="right" className="hidden xl:table-cell text-steel">
                         {p.qtd_por_cesta.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
-                      <TableCell align="right" className="hidden min-[1360px]:table-cell text-steel text-[13px] tabular-nums">
+                      <TableCell align="right" className="hidden min-[1360px]:table-cell text-steel text-[13px] tabular-nums" suppressHydrationWarning>
                         {p.ultima_atualizacao_preco
                           ? new Date(p.ultima_atualizacao_preco).toLocaleDateString('pt-BR')
                           : '-'}

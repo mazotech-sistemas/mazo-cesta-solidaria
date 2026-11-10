@@ -146,7 +146,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
                 </Badge>
               </div>
 
-              <div className="hidden sm:block sm:w-[120px] text-right text-steel text-[13px] tabular-nums">
+              <div className="hidden sm:block sm:w-[120px] text-right text-steel text-[13px] tabular-nums" suppressHydrationWarning>
                 {user.criado_em
                   ? new Date(user.criado_em).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
                   : '-'}

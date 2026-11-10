@@ -102,7 +102,7 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
                 <BasketIcon size={17} />
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block text-[13.5px] font-medium text-ink tabular-nums">
+                <span className="block text-[13.5px] font-medium text-ink tabular-nums" suppressHydrationWarning>
                   {new Date(purchase.criado_em).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',

@@ -514,7 +514,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
                         )}
                       </p>
                       <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-steel tabular-nums sm:mt-0 sm:text-[12px]">
-                        <span>
+                        <span suppressHydrationWarning>
                           {formatarDia(compra.criado_em)}
                           <span className="hidden sm:inline"> {formatarHora(compra.criado_em)}</span>
                         </span>
