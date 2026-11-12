@@ -70,7 +70,7 @@ async function main() {
 
     // Leitura
     const { data: lidos } = await supabase.from('produtos').select('*').eq('nome', nome);
-    check('ler produto criado', () => lidos !== undefined && lidos.length === 1 && (lidos[0] as any).estoque_atual === 50);
+    check('ler produto criado', () => lidos != null && lidos.length === 1 && (lidos[0] as any).estoque_atual === 50);
 
     // Atualização (estoque)
     const { error: erroUpd } = await supabase.from('produtos').update({ estoque_atual: 48 }).eq('id', criadoId);

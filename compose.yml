@@ -1,0 +1,11 @@
+# mazo-cesta-solidaria — vertical social de doacoes (Next.js + Supabase)
+name: "mazo-cesta-solidaria"
+
+services:
+  cesta:
+    build:
+      context: ./code
+    image: mazotech/cesta-solidaria:local
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
