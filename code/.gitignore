@@ -25,3 +25,7 @@ reports
 __pycache__/
 uv.lock
 .superdesign
+
+# Supabase CLI (estado local)
+supabase/.branches
+supabase/.temp
