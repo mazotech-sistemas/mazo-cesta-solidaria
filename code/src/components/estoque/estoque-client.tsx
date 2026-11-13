@@ -523,8 +523,8 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
     <div className="space-y-4">
       {/* Toolbar: busca e filtro à esquerda, ações à direita */}
       <div className="panel flex flex-wrap items-center gap-3 p-3">
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center min-w-0 min-[1360px]:w-auto min-[1360px]:flex-1">
-          <div className="relative flex-1 min-w-0">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative min-w-[160px] flex-1">
             <SearchIcon
               size={16}
               className="pointer-events-none absolute left-3.5 top-1/2 -translate_y-1/2 text-steel/70"
