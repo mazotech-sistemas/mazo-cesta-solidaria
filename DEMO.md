@@ -7,14 +7,14 @@ seed popula dados de exemplo.
 ## Pré-requisito
 
 Supabase CLI + Docker. O `supabase start` sobe os containers locais
-(API `54321`, DB `54322`, Studio `54323`, Auth `54329` — ver `supabase/config.toml`).
+(API e Auth `54321`, DB `54322`, Studio `54323`, SMTP `54324` — ver `supabase/config.toml`).
 
 ## Subir
 
 ```bash
 npm install
 supabase start          # ANOTE o API URL, anon key e service_role key impressos
-supabase db reset       # aplica supabase/migrations/001_initial_schema.sql
+supabase db reset       # aplica as migrations de supabase/migrations/
 
 # .env.local com os valores que o supabase start imprimiu:
 #   NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
@@ -28,6 +28,11 @@ npm run dev             # http://localhost:3000
 O usuário admin de login (`admin@cestasolidaria.org` / `senha123`, fallback do
 `.env.example`) pode ser criado pelo Studio local em `http://localhost:54323`
 (Authentication → Add user) ou pelo fluxo de signup do próprio app.
+
+Para dados de demonstração (admin Marta Oliveira, 2 voluntários, estoque
+ajustado, 5 séries de preço e 4 compras), rode
+`npx tsx scripts/seed_demo_captura.ts` depois do seed base. É o roteiro usado na
+captura de mídia.
 
 Tudo local, custo zero, sem credencial de produção. O app não roda sem um
 Supabase válido (o `middleware.ts` chama `auth.getUser()` em quase toda rota);
