@@ -22,6 +22,7 @@
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@mazotech/ui": "github:mazotech-sistemas/mazo-ui#d750228ff1f0890391f8be468048f27c8dc20709",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.45.0",
     "next": "15.5.27",

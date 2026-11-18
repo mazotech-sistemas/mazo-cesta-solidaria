@@ -1,17 +1,13 @@
 @import "tailwindcss";
+/* Cores de marca, tema e camada shadcn vêm do pacote. Fontes não: a cesta
+   carrega o Inter por next/font. */
+@import "@mazotech/ui/styles.css";
 
-/* Cores e raio que viviam no tailwind.config.ts (v3). Mesmos valores. */
+/* O que é só da cesta. Fica depois do import para vencer as cores de status
+   do pacote, que têm outros valores. */
 @theme {
-  --color-navy: #021D44;
-  --color-royal: #0052FA;
-  --color-royal-m: #0E5DFC;
-  --color-steel: #4573A7;
+  /* Texto pequeno sobre fundo claro: steel puro fica em 4.21:1 no ice. */
   --color-steel-strong: #3A6491;
-  --color-ice: #EDEDED;
-  --color-mint: #00DEB2;
-  --color-paper: #FFFFFF;
-  --color-ink: #052049;
-  --color-label: #1C355E;
 
   /* Semânticas: único lugar para estado de alerta/erro/sucesso. */
   --color-warn: #B54708;
@@ -37,6 +33,8 @@
   --text-4xl--line-height: 2.5rem;
 
   --font-sans: Inter, system-ui, sans-serif;
+  /* O pacote aponta font-mono para --font-jet, que só existe com fonts.css. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --radius-mazotech: 20px;
 }
 
