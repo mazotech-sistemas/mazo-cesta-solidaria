@@ -12,7 +12,7 @@ Funcionalidade: Login e Autenticação
     E eu preencho a senha "senha123"
     E eu clico no botão "Entrar"
     Então eu devo ser redirecionado para o dashboard
-    E eu devo ver "Cesta" no título
+    E eu devo ver "Bem-vindo" no título
 
   @login
   Cenário: Login com credenciais inválidas

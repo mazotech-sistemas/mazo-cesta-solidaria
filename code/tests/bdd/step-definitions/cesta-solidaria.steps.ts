@@ -107,7 +107,7 @@ Then('a página deve carregar sem redirecionar para login', async function (this
 });
 
 Then('eu devo ver {string} no título', async function (this: CestaWorld, texto: string) {
-  await expect(this.page.locator('h1')).toContainText(texto, { timeout: 15000 });
+  await expect(this.page.locator('h1')).toContainText(texto, { timeout: 4000 });
 });
 
 When('eu clico em uma pergunta do FAQ', async function (this: CestaWorld) {

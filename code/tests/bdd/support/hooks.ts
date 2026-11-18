@@ -1,4 +1,4 @@
-import { Before, After, setWorldConstructor } from '@cucumber/cucumber';
+import { Before, After, AfterAll, setWorldConstructor } from '@cucumber/cucumber';
 import { Browser, BrowserContext, Page, chromium } from '@playwright/test';
 import type { CestaWorld } from '../world';
 
@@ -38,8 +38,10 @@ After(async function () {
   await this.cleanup();
 });
 
-// Encerra o navegador uma única vez no fim da suíte
-process.on('exit', async () => {
+// Encerra o navegador uma única vez no fim da suíte. O handler de `exit` do
+// processo não aguarda promessa: o Chromium ficava vivo e o cucumber-js nunca
+// terminava. O AfterAll do cucumber espera o close antes de encerrar.
+AfterAll(async function () {
   if (browser) {
     await browser.close();
     browser = null;
