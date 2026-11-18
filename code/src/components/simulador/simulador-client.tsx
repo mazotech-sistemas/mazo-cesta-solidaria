@@ -243,7 +243,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
       {/* ===== Alertas do planner ===== */}
       {numeroCestas > cestasEstoque && (
         <div className="panel border-l-4 border-warn p-4 flex items-start gap-3" role="alert">
-          <span className="text-warn flex-shrink-0"><AlertTriangleIcon size={18} /></span>
+          <span className="text-warn shrink-0"><AlertTriangleIcon size={18} /></span>
           <p className="text-[13px] text-navy">
             Estoque cobre apenas {cestasEstoque} cesta{cestasEstoque !== 1 ? 's' : ''} das {numeroCestas} solicitadas. Compre os itens faltantes abaixo ou reduza a quantidade.
           </p>
@@ -251,7 +251,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
       )}
       {orcamento > 0 && numeroCestas > cestasOrcamento && (
         <div className="panel border-l-4 border-warn p-4 flex items-start gap-3" role="alert">
-          <span className="text-warn flex-shrink-0"><AlertTriangleIcon size={18} /></span>
+          <span className="text-warn shrink-0"><AlertTriangleIcon size={18} /></span>
           <p className="text-[13px] text-navy">
             O orçamento cobre apenas {cestasOrcamento} cesta{cestasOrcamento !== 1 ? 's' : ''} das {numeroCestas} solicitadas.
           </p>
@@ -259,7 +259,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
       )}
       {faltantes.length === 0 && numeroCestas > 0 && produtos.length > 0 && (
         <div className="panel border-l-4 border-success p-4 flex items-start gap-3" role="status">
-          <span className="text-success flex-shrink-0"><CheckIcon size={18} /></span>
+          <span className="text-success shrink-0"><CheckIcon size={18} /></span>
           <p className="text-[13px] text-navy">
             Estoque completo para {numeroCestas} cesta{numeroCestas > 1 ? 's' : ''}. Nada para comprar.
           </p>
@@ -326,7 +326,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                 className="pl-10"
               />
             </div>
-            <div className="flex flex-shrink-0 items-center gap-0.5 sm:ml-auto sm:border-l sm:border-[var(--line)] sm:pl-3">
+            <div className="flex shrink-0 items-center gap-0.5 sm:ml-auto sm:border-l sm:border-[var(--line)] sm:pl-3">
               <Button variant="ghost" size="sm" onClick={selecionarTodos}>
                 Selecionar todos
               </Button>
@@ -345,7 +345,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
 
         {saved && (
           <div className="panel flex items-center gap-3 border-success-line bg-success-soft px-4 py-3 mt-3" role="alert">
-            <span className="text-success flex-shrink-0">
+            <span className="text-success shrink-0">
               <CheckIcon size={20} />
             </span>
             <div>
@@ -397,7 +397,7 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                         type="checkbox"
                         checked={checked}
                         onChange={() => handleToggle(p.id)}
-                        className="w-[18px] h-[18px] rounded border-[var(--line)] text-royal flex-shrink-0"
+                        className="w-[18px] h-[18px] rounded border-[var(--line)] text-royal shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <label htmlFor={`produto-${p.id}`} className="block cursor-pointer">
@@ -405,11 +405,11 @@ export default function SimuladorClient({ produtos, userId }: SimuladorClientPro
                           {p.marca && <span className="block text-[12px] text-steel truncate">{p.marca} {p.unidade ? '- ' + p.unidade : ''}</span>}
                         </label>
                       </div>
-                      <div className="w-24 flex-shrink-0 text-right text-[13.5px] font-semibold text-navy tabular-nums">
+                      <div className="w-24 shrink-0 text-right text-[13.5px] font-semibold text-navy tabular-nums">
                         R$ {p.preco_atual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
                       <div
-                        className={`flex items-center justify-end gap-2 flex-shrink-0 ${
+                        className={`flex items-center justify-end gap-2 shrink-0 ${
                           checked ? 'w-full sm:w-[168px]' : 'hidden sm:flex sm:w-[168px]'
                         }`}
                       >

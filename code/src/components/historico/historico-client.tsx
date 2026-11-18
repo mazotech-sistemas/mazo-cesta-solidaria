@@ -312,7 +312,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
             />
           </div>
           <div className="flex min-w-0 items-center gap-1.5 rounded-xl bg-ice/60 px-2 py-1">
-            <CalendarIcon size={15} className="hidden text-steel/80 flex-shrink-0 ml-1 sm:block" />
+            <CalendarIcon size={15} className="hidden text-steel/80 shrink-0 ml-1 sm:block" />
             <div className="w-[132px] sm:w-[122px]">
               <Input
                 type="date"
@@ -339,7 +339,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
               id="filtro-ordem"
               value={ordem}
               onChange={(e) => setOrdem(e.target.value as OrdemCompra)}
-              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-hidden focus:ring-2 focus:ring-royal/20"
             >
               <option value="recentes">Mais recentes</option>
               <option value="antigas">Mais antigas</option>
@@ -420,7 +420,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
                 id="prod-preco"
                 value={prodPrecoId ?? ''}
                 onChange={(e) => setProdPrecoId(e.target.value ? Number(e.target.value) : null)}
-                className="max-w-[260px] flex-1 h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+                className="max-w-[260px] flex-1 h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-hidden focus:ring-2 focus:ring-royal/20"
               >
                 <option value="">Selecione…</option>
                 {produtosComPreco.map((p) => (
@@ -486,7 +486,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
                 <div className="flex items-start gap-3 px-4 py-3 sm:gap-4">
                   <button
                     onClick={() => handleExpand(compra.id)}
-                    className="flex items-center justify-center w-8 h-8 rounded-lg text-steel bg-paper border border-[var(--line)] flex-shrink-0 self-start transition-colors hover:text-navy hover:border-steel/40"
+                    className="flex items-center justify-center w-8 h-8 rounded-lg text-steel bg-paper border border-[var(--line)] shrink-0 self-start transition-colors hover:text-navy hover:border-steel/40"
                     aria-expanded={isExpanded}
                     aria-label={isExpanded ? 'Recolher detalhes' : 'Expandir detalhes'}
                   >
@@ -537,7 +537,7 @@ export default function HistoricoClient({ compras, isAdmin, userId, precos, prod
                       size="sm"
                       onClick={() => handleDelete(compra.id)}
                       disabled={deleting === compra.id}
-                      className="flex-shrink-0 self-start"
+                      className="shrink-0 self-start"
                     >
                       {deleting === compra.id ? 'Excluindo...' : 'Excluir'}
                     </Button>

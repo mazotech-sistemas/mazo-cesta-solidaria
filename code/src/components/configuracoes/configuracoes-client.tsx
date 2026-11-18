@@ -203,7 +203,7 @@ export default function ConfiguracoesClient({ regioes: regioesIniciais, config, 
     <div className="space-y-5">
       {precosDesatualizados > 0 && (
         <div className="panel flex items-start gap-4 px-5 py-4 border-l-[3px] border-l-warn">
-          <span className="w-10 h-10 rounded-[12px] bg-warn-soft text-warn flex items-center justify-center flex-shrink-0">
+          <span className="w-10 h-10 rounded-[12px] bg-warn-soft text-warn flex items-center justify-center shrink-0">
             <AlertTriangleIcon size={20} />
           </span>
           <div>

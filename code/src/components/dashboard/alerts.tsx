@@ -94,7 +94,7 @@ export default function Alerts({
   if (alerts.length === 0) {
     return (
       <section className="panel flex items-center gap-4 px-5 py-4">
-        <span className="w-10 h-10 rounded-[12px] bg-success-soft text-success flex items-center justify-center flex-shrink-0">
+        <span className="w-10 h-10 rounded-[12px] bg-success-soft text-success flex items-center justify-center shrink-0">
           <CheckIcon size={20} />
         </span>
         <div>
@@ -115,14 +115,14 @@ export default function Alerts({
             href={alert.href}
             className={`group panel flex items-center gap-4 px-5 py-4 transition-colors hover:bg-ice/40 ${alert.borderColor}`}
           >
-            <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0 ${alert.iconBg}`}>
+            <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 ${alert.iconBg}`}>
               {alert.icon}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-navy text-[14.5px]">{alert.title}</h3>
               <p className="text-steel text-[13px] mt-0.5">{alert.description}</p>
             </div>
-            <svg className="w-4 h-4 text-steel/50 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="w-4 h-4 text-steel/50 shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>

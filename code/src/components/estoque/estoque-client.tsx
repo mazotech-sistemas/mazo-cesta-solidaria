@@ -555,7 +555,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
               id="filtro-status-preco"
               value={statusPreco}
               onChange={(e) => setStatusPreco(e.target.value as StatusPreco)}
-              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-hidden focus:ring-2 focus:ring-royal/20"
             >
               <option value="todos">todos</option>
               <option value="automatico">automático</option>
@@ -576,7 +576,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
                 // Custo na cesta padrão decrescente para ver o que mais pesa primeiro
                 setSortDir(field === 'custo_cesta' ? 'desc' : 'asc');
               }}
-              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20"
+              className="h-8 rounded-lg border border-[var(--line)] bg-paper px-2 text-[13px] text-ink focus:border-royal focus:outline-hidden focus:ring-2 focus:ring-royal/20"
             >
               <option value="nome">Nome</option>
               <option value="estoque">Estoque</option>
@@ -589,7 +589,7 @@ function EstoqueInner({ produtos, isAdmin, precoStaleDias = 7 }: EstoqueClientPr
               data-testid="ordenacao-direcao"
               onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')}
               aria-label={sortDir === 'asc' ? 'Ordenar decrescente' : 'Ordenar crescente'}
-              className="h-8 w-8 rounded-lg border border-[var(--line)] bg-paper flex items-center justify-center text-steel hover:text-ink hover:border-royal focus:outline-none focus:ring-2 focus:ring-royal/20 transition-colors"
+              className="h-8 w-8 rounded-lg border border-[var(--line)] bg-paper flex items-center justify-center text-steel hover:text-ink hover:border-royal focus:outline-hidden focus:ring-2 focus:ring-royal/20 transition-colors"
             >
               {sortDir === 'asc' ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">

@@ -20,7 +20,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           className={cn(
             'w-full px-4 py-2.5 text-ink bg-paper border rounded-xl transition-colors appearance-none',
-            'focus:border-royal focus:outline-none',
+            'focus:border-royal focus:outline-hidden',
             'disabled:bg-ice disabled:cursor-not-allowed',
             error
               ? 'border-danger focus:border-danger'

@@ -129,7 +129,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
               className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-ice/40 sm:flex-nowrap"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="w-9 h-9 rounded-[11px] bg-navy text-paper flex items-center justify-center text-[12px] font-extrabold flex-shrink-0">
+                <span className="w-9 h-9 rounded-[11px] bg-navy text-paper flex items-center justify-center text-[12px] font-extrabold shrink-0">
                   {user.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                 </span>
                 <span className="min-w-0">
@@ -140,7 +140,7 @@ export default function UsuariosClient({ users: usersIniciais, currentUserId, ba
                 </span>
               </div>
 
-              <div className="flex-shrink-0 sm:w-[140px]">
+              <div className="shrink-0 sm:w-[140px]">
                 <Badge variant={user.is_admin ? 'primary' : 'secondary'}>
                   {user.is_admin ? 'Administrador' : 'Voluntário'}
                 </Badge>

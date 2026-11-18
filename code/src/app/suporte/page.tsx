@@ -61,7 +61,7 @@ export default function SuportePage() {
           <h2 className="text-xl font-extrabold tracking-[-0.02em] text-navy mb-4">Contato</h2>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                   <polyline points="22,6 12,13 2,6" />
@@ -73,7 +73,7 @@ export default function SuportePage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
@@ -84,7 +84,7 @@ export default function SuportePage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-royal/10 text-royal flex items-center justify-center shrink-0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                   <circle cx="12" cy="10" r="3" />
@@ -106,7 +106,7 @@ export default function SuportePage() {
               <details key={index} className="group border border-[var(--line)] rounded-xl overflow-hidden">
                 <summary className="flex items-center justify-between p-4 cursor-pointer hover:bg-ice/50 transition-colors list-none">
                   <span className="font-medium text-navy">{item.pergunta}</span>
-                  <svg className="w-5 h-5 text-steel group-open:rotate-180 transition-transform flex-shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-steel group-open:rotate-180 transition-transform shrink-0 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </summary>

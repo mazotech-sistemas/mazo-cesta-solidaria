@@ -6,11 +6,11 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-ghost' | '
 type Size = 'default' | 'sm' | 'lg' | 'icon';
 
 const base =
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[20px] text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[20px] text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0';
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-royal text-paper hover:bg-royal/90 active:bg-royal/80 shadow-sm',
+    'bg-royal text-paper hover:bg-royal/90 active:bg-royal/80 shadow-xs',
   secondary:
     'border-2 border-royal text-royal bg-transparent hover:bg-royal/5 active:bg-royal/10',
   ghost: 'text-steel hover:text-navy hover:bg-ice/70',

@@ -29,7 +29,7 @@ export function Avatar({ src, alt, size = 'md', className, ...props }: AvatarPro
   return (
     <div
       className={cn(
-        'rounded-xl bg-navy text-paper flex items-center justify-center font-extrabold flex-shrink-0 overflow-hidden',
+        'rounded-xl bg-navy text-paper flex items-center justify-center font-extrabold shrink-0 overflow-hidden',
         sizes[size],
         className
       )}

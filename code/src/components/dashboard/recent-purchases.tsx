@@ -98,7 +98,7 @@ export default function RecentPurchases({ userId }: RecentPurchasesProps) {
         <ul className="divide-y divide-[var(--line)]">
           {purchases.map((purchase) => (
             <li key={purchase.id} className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-ice/40 transition-colors">
-              <span className="hidden sm:flex w-9 h-9 rounded-[11px] bg-royal/10 text-royal items-center justify-center flex-shrink-0">
+              <span className="hidden sm:flex w-9 h-9 rounded-[11px] bg-royal/10 text-royal items-center justify-center shrink-0">
                 <BasketIcon size={17} />
               </span>
               <span className="flex-1 min-w-0">
